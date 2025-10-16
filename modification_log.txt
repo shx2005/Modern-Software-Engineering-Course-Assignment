@@ -1,0 +1,27 @@
+[2025-10-16 17:28:21] Created modification log file.
+[2025-10-16 17:28:26] Created initial project directory structure (include/, src/ with backend/frontend).
+[2025-10-16 17:29:02] Added backend RedEnvelope interface definition.
+[2025-10-16 17:29:13] Declared Tank interface and movement helpers.
+[2025-10-16 17:29:32] Declared GameEngine interface with configuration and stats.
+[2025-10-16 17:29:41] Implemented RedEnvelope data object.
+[2025-10-16 17:29:55] Implemented Tank movement and collision helper.
+[2025-10-16 17:30:12] Extended GameEngine state to track envelope identifiers.
+[2025-10-16 17:30:57] Implemented GameEngine core logic (spawn, movement, collision).
+[2025-10-16 17:31:35] Exposed GameEngine configuration accessor for frontend consumption.
+[2025-10-16 17:31:42] Added GameEngine::getConfig for rendering details.
+[2025-10-16 17:31:51] Declared frontend ConsoleUI interface for console interaction.
+[2025-10-16 17:32:10] Adjusted ConsoleUI command parsing signature to accept single char.
+[2025-10-16 17:32:36] Implemented console frontend rendering and input loop.
+[2025-10-16 17:32:47] Created main entry point wiring backend engine to console UI.
+[2025-10-16 17:33:02] Added Makefile using clang++ build workflow.
+[2025-10-16 17:33:38] Verified build with make and prepared project handoff.
+[2025-10-16 17:35:25] Added descriptive file headers across source and header files.
+[2025-10-16 17:35:28] Authored README.md documenting project structure and usage.
+[2025-10-16 17:41:31] Added WebServer interface and implementation for HTTP gameplay.
+[2025-10-16 17:41:35] Replaced console entry point with web server bootstrap and port guard.
+[2025-10-16 17:41:39] Authored web/index.html for browser visualization and controls.
+[2025-10-16 17:41:44] Updated README with web usage instructions and port management notes.
+[2025-10-16 17:41:48] Rebuilt project after web integration to ensure successful compilation.
+[2025-10-16 17:42:19] Ensured initial engine state respects seed by invoking reset in main.
+[2025-10-16 17:42:41] Hardened HTTP header parsing for Content-Length in WebServer.
+[2025-10-16 17:42:46] Rebuilt target after server parsing hardening.
