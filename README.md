@@ -12,6 +12,7 @@ src/
   backend/       # Game logic implementations
   frontend/      # Console UI (legacy), web server, and HTTP entry point
 web/             # Static HTML/CSS/JS assets rendered in the browser
+logs/            # Runtime log files (overwritten on each execution)
 bin/             # Generated executable output (created after build)
 modification_log.txt  # Chronological record of development changes
 Makefile         # clang++ build configuration
@@ -47,6 +48,15 @@ TANK_GAME_PORT=8082 ./bin/tank_red_envelope
 ```
 
 Open a browser at `http://localhost:<port>` to play. Use the on-screen buttons or keyboard (W/A/S/D or arrow keys) to steer the tank. The interface displays remaining time, collected count, and total value in real time. Press “重新开始” to reseed the game.
+
+### Gameplay HUD
+
+- 每个红包的面额直接绘制在方块内，拾取后实时统计到顶部 HUD。
+- 倒计时结束时自动弹出本局总结，包括红包数量与总金额，并禁用移动操作。
+
+## Logging
+
+The service writes timestamped logs to `logs/server.log` while mirroring the same content to the console. The file is truncated on each launch to simplify debugging sessions.
 
 ## Cleaning
 

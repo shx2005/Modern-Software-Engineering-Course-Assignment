@@ -25,3 +25,7 @@
 [2025-10-16 17:42:19] Ensured initial engine state respects seed by invoking reset in main.
 [2025-10-16 17:42:41] Hardened HTTP header parsing for Content-Length in WebServer.
 [2025-10-16 17:42:46] Rebuilt target after server parsing hardening.
+[2025-10-16 17:50:22] Implemented Logger utility with file and console output.
+[2025-10-16 17:50:22] Wired logger into server startup and request handling.
+[2025-10-16 17:50:22] Enhanced web UI to render envelope amounts and end-of-game summary.
+[2025-10-16 17:50:22] Documented UI/logging updates in README.

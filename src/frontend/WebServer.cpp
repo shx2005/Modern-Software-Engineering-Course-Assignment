@@ -4,6 +4,8 @@
 
 #include "frontend/WebServer.hpp"
 
+#include "backend/Logger.hpp"
+
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
@@ -65,6 +67,7 @@ void WebServer::run() {
         throw std::runtime_error("Failed to listen on server socket.");
     }
 
+    backend::Logger::instance().log("Web server listening on port " + std::to_string(m_port) + ".");
     std::cout << "Web server listening on port " << m_port << "\n";
 
     while (true) {
@@ -165,6 +168,8 @@ void WebServer::handleClient(int clientSocket) {
     int statusCode = 200;
     std::string responseBody;
 
+    backend::Logger::instance().log("Request: " + method + " " + path);
+
     try {
         if (method == "GET" && (path == "/" || path == "/index.html")) {
             responseBody = loadStaticFile("index.html", contentType);
@@ -177,9 +182,11 @@ void WebServer::handleClient(int clientSocket) {
             responseBody = handleApiRequest(method, path, body, contentType, statusCode);
         } else {
             sendNotFound(clientSocket);
+            backend::Logger::instance().log("Responded 404 for path " + path + ".");
             return;
         }
     } catch (const std::exception& ex) {
+        backend::Logger::instance().log(std::string("Internal error while handling request: ") + ex.what());
         sendInternalError(clientSocket, ex.what());
         return;
     }
@@ -239,6 +246,10 @@ std::string WebServer::handleApiRequest(const std::string& method,
                 moved = m_engine.moveTank(direction);
             }
         }
+        std::string logMessage = "Move request, body='" + body + "', moved=" +
+                                 std::string(moved ? "true" : "false") + ", timeUp=" +
+                                 std::string(timeUp ? "true" : "false") + ".";
+        backend::Logger::instance().log(logMessage);
         std::ostringstream oss;
         oss << R"({"success":)" << ((moved && !timeUp) ? "true" : "false") << ",";
         oss << R"("timeUp":)" << (timeUp ? "true" : "false") << "}";
@@ -253,10 +264,12 @@ std::string WebServer::handleApiRequest(const std::string& method,
             m_engine.setRandomSeed(seed);
             m_engine.reset();
         }
+        backend::Logger::instance().log("Reset request completed and engine reseeded.");
         return R"({"success":true})";
     }
 
     statusCode = 404;
+    backend::Logger::instance().log("API path not found: " + path);
     return R"({"error":"Unsupported API path"})";
 }
 

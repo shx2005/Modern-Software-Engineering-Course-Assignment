@@ -71,6 +71,13 @@
         background: #3a3f4b;
         border-radius: 3px;
         transition: transform 0.1s ease-out;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.7rem;
+        font-weight: 700;
+        color: #1f242d;
+        user-select: none;
       }
 
       .cell.envelope-small {
@@ -123,6 +130,12 @@
         outline: none;
       }
 
+      button:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+        transform: none !important;
+      }
+
       .wide-button {
         padding: 0.7rem 1.4rem;
         width: 260px;
@@ -138,6 +151,24 @@
       .status {
         color: #f8f8f2;
         font-weight: 600;
+      }
+
+      .summary {
+        margin-top: 2rem;
+        padding: 1rem 1.5rem;
+        border-radius: 1rem;
+        background: rgba(255, 255, 255, 0.08);
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+      }
+
+      .summary h2 {
+        margin: 0 0 0.5rem;
+        font-size: 1.2rem;
+      }
+
+      .summary p {
+        margin: 0.2rem 0;
+        line-height: 1.6;
       }
 
       @media (max-width: 768px) {
@@ -201,6 +232,10 @@
         <button id="btn-reset" class="wide-button">重新开始</button>
         <div>提示：也可以使用键盘 W/A/S/D 或箭头键来移动坦克。</div>
       </section>
+      <section id="game-summary" class="summary" hidden>
+        <h2>本局总结</h2>
+        <p id="summary-body">比赛尚未结束，请继续努力！</p>
+      </section>
     </main>
     <footer>端口由服务器控制（默认 8080），可通过命令行或环境变量 TANK_GAME_PORT 调整。</footer>
 
@@ -210,6 +245,8 @@
       const valueEl = document.getElementById("value");
       const gridEl = document.getElementById("grid");
       const statusEl = document.getElementById("game-status");
+      const summaryEl = document.getElementById("game-summary");
+      const summaryBodyEl = document.getElementById("summary-body");
 
       const directionButtons = {
         up: document.getElementById("btn-up"),
@@ -228,6 +265,9 @@
       }
 
       async function sendMove(direction) {
+        if (directionButtons.up.disabled) {
+          return;
+        }
         await fetch("/move", {
           method: "POST",
           headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -237,6 +277,9 @@
       }
 
       document.addEventListener("keydown", (event) => {
+        if (directionButtons.up.disabled) {
+          return;
+        }
         switch (event.key) {
           case "w":
           case "ArrowUp":
@@ -266,6 +309,7 @@
           renderState(data);
         } catch (error) {
           statusEl.textContent = "无法连接服务器";
+          summaryEl.hidden = true;
         }
       }
 
@@ -273,7 +317,19 @@
         timeLeftEl.textContent = state.timeLeft.toFixed(1);
         countEl.textContent = state.stats.count;
         valueEl.textContent = state.stats.value;
-        statusEl.textContent = state.timeLeft <= 0 ? "时间结束" : "游戏进行中";
+        const finished = state.timeLeft <= 0;
+        statusEl.textContent = finished ? "时间结束" : "游戏进行中";
+        if (finished) {
+          summaryEl.hidden = false;
+          summaryBodyEl.innerHTML =
+            `本局拾取红包 <strong>${state.stats.count}</strong> 个，总金额 <strong>${state.stats.value}</strong> 元。` +
+            `<br />地图大小：${state.worldWidth} × ${state.worldHeight}，倒计时 ${state.timeLimit} 秒。`;
+        } else {
+          summaryEl.hidden = true;
+        }
+        Object.values(directionButtons).forEach((button) => {
+          button.disabled = finished;
+        });
 
         gridEl.style.gridTemplateColumns = `repeat(${state.worldWidth}, 20px)`;
         gridEl.innerHTML = "";
@@ -299,12 +355,17 @@
             } else {
               cell.classList.add("envelope-large");
             }
+            cell.textContent = envelope.value;
+            cell.title = `红包金额：${envelope.value}`;
           }
         });
 
         const tankIndex = state.tank.y * state.worldWidth + state.tank.x;
         if (tankIndex >= 0 && tankIndex < cells.length) {
-          cells[tankIndex].classList.add("tank");
+          const tankCell = cells[tankIndex];
+          tankCell.classList.add("tank");
+          tankCell.textContent = "坦";
+          tankCell.title = "玩家坦克";
         }
       }
 

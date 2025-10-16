@@ -3,6 +3,7 @@
 //              powering the browser-based tank red envelope game.
 
 #include "backend/GameEngine.hpp"
+#include "backend/Logger.hpp"
 #include "frontend/WebServer.hpp"
 
 #include <chrono>
@@ -47,6 +48,9 @@ int resolvePort(int argc, char* argv[]) {
 }  // namespace
 
 int main(int argc, char* argv[]) {
+    backend::Logger::instance().initialize("logs/server.log");
+    backend::Logger::instance().log("Initializing tank red envelope game.");
+
     backend::GameConfig config;
     config.worldWidth = 30;
     config.worldHeight = 20;
@@ -58,13 +62,17 @@ int main(int argc, char* argv[]) {
         static_cast<unsigned int>(std::chrono::system_clock::now().time_since_epoch().count());
     engine.setRandomSeed(seed);
     engine.reset();
+    backend::Logger::instance().log("Engine seeded with value " + std::to_string(seed) + ".");
 
     const int port = resolvePort(argc, argv);
+    backend::Logger::instance().log("Resolved HTTP port " + std::to_string(port) + ".");
     frontend::WebServer server(engine, "web", port);
 
     try {
+        backend::Logger::instance().log("Starting web server event loop.");
         server.run();
     } catch (const std::exception& ex) {
+        backend::Logger::instance().log(std::string("Server terminated: ") + ex.what());
         std::cerr << "Server terminated: " << ex.what() << "\n";
         return 1;
     }
