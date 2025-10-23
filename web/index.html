@@ -201,6 +201,130 @@
         text-align: left;
       }
 
+      .duck-panel {
+        position: fixed;
+        left: 24px;
+        bottom: 24px;
+        width: 96px;
+        height: 96px;
+        border-radius: 16px;
+        background: rgba(30, 34, 45, 0.85);
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        z-index: 120;
+      }
+
+      .duck-panel:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.45);
+      }
+
+      #duck-helper {
+        max-width: 72px;
+        max-height: 72px;
+        pointer-events: none;
+      }
+
+      .duck-dialog {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(14, 17, 22, 0.65);
+        backdrop-filter: blur(6px);
+        z-index: 140;
+      }
+
+      .duck-dialog[hidden] {
+        display: none;
+      }
+
+      .duck-dialog-card {
+        position: relative;
+        width: min(320px, 90vw);
+        padding: 1.5rem;
+        border-radius: 1.25rem;
+        background: rgba(33, 38, 51, 0.96);
+        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+        color: #f8f8f2;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+
+      .duck-dialog-card h3 {
+        margin: 0;
+        font-size: 1.25rem;
+        text-align: center;
+      }
+
+      .duck-dialog-body {
+        display: flex;
+        gap: 0.75rem;
+      }
+
+      #duck-input {
+        flex: 1;
+        padding: 0.6rem 0.75rem;
+        border-radius: 0.75rem;
+        border: none;
+        background: rgba(248, 248, 242, 0.1);
+        color: #f8f8f2;
+      }
+
+      #duck-input:focus {
+        outline: 2px solid rgba(119, 139, 235, 0.6);
+        background: rgba(248, 248, 242, 0.18);
+      }
+
+      #duck-send {
+        padding: 0.6rem 1.1rem;
+        border-radius: 0.75rem;
+        border: none;
+        background: #778beb;
+        color: #0e1116;
+        cursor: pointer;
+        font-weight: 600;
+        transition: transform 0.15s ease, background 0.2s ease;
+      }
+
+      #duck-send:hover,
+      #duck-send:focus {
+        transform: translateY(-2px);
+        background: #a7b8ff;
+      }
+
+      .duck-response {
+        margin: 0;
+        font-size: 0.95rem;
+        min-height: 1.2rem;
+        text-align: center;
+        color: rgba(248, 248, 242, 0.85);
+      }
+
+      .duck-close {
+        position: absolute;
+        top: 0.65rem;
+        right: 0.75rem;
+        border: none;
+        background: transparent;
+        color: rgba(248, 248, 242, 0.65);
+        font-size: 1.4rem;
+        cursor: pointer;
+        line-height: 1;
+        transition: color 0.2s ease;
+      }
+
+      .duck-close:hover,
+      .duck-close:focus {
+        color: #ffffff;
+      }
+
       button {
         background: #596275;
         color: #f8f8f2;
@@ -443,8 +567,22 @@
       </section>
     </main>
     <footer>端口由服务器控制（默认 8080），可通过命令行或环境变量 TANK_GAME_PORT 调整。</footer>
+    <div class="duck-panel" id="duck-helper-panel">
+      <img src="/static/duck.png" alt="Duck assistant" id="duck-helper" />
+    </div>
+    <div id="duck-dialog" class="duck-dialog" hidden>
+      <div class="duck-dialog-card">
+        <button id="duck-close" class="duck-close" aria-label="关闭">×</button>
+        <h3>有什么可以帮助你？</h3>
+        <div class="duck-dialog-body">
+          <input id="duck-input" type="text" placeholder="输入命令..." />
+          <button id="duck-send">Send</button>
+        </div>
+        <p id="duck-response" class="duck-response"></p>
+      </div>
+    </div>
 
-        <script>
+    <script>
       const timeLeftEl = document.getElementById("time-left");
       const countEl = document.getElementById("count");
       const valueEl = document.getElementById("value");
@@ -458,6 +596,12 @@
       const rainButton = document.getElementById("btn-rain");
       const pauseButton = document.getElementById("btn-pause");
       const rainOverlay = document.getElementById("rain-overlay");
+      const duckPanel = document.getElementById("duck-helper-panel");
+      const duckDialog = document.getElementById("duck-dialog");
+      const duckClose = document.getElementById("duck-close");
+      const duckInput = document.getElementById("duck-input");
+      const duckSend = document.getElementById("duck-send");
+      const duckResponse = document.getElementById("duck-response");
 
       const directionButtons = {
         up: document.getElementById("btn-up"),
@@ -525,6 +669,26 @@
       for (const [direction, button] of Object.entries(directionButtons)) {
         button.addEventListener("click", () => sendMove(direction));
       }
+
+      duckPanel.addEventListener("click", openDuckDialog);
+      duckClose.addEventListener("click", closeDuckDialog);
+      duckDialog.addEventListener("click", (event) => {
+        if (event.target === duckDialog) {
+          closeDuckDialog();
+        }
+      });
+      duckSend.addEventListener("click", submitDuckCommand);
+      duckInput.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          submitDuckCommand();
+        }
+      });
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && !duckDialog.hidden) {
+          closeDuckDialog();
+        }
+      });
 
       async function startGame() {
         if (gameStarted) {
@@ -622,6 +786,38 @@
         } finally {
           pauseButton.disabled = false;
           rainButton.disabled = gameFinished || gamePaused || rainInProgress;
+        }
+      }
+
+      function openDuckDialog() {
+        duckDialog.hidden = false;
+        duckInput.value = "";
+        duckResponse.textContent = "";
+        setTimeout(() => duckInput.focus(), 0);
+      }
+
+      function closeDuckDialog() {
+        duckDialog.hidden = true;
+      }
+
+      async function submitDuckCommand() {
+        const command = duckInput.value.trim();
+        if (!command) {
+          duckResponse.textContent = "请输入命令";
+          duckInput.focus();
+          return;
+        }
+        if (command.includes("红包雨")) {
+          duckResponse.textContent = "正在为你触发红包雨...";
+          try {
+            await triggerRain();
+            duckResponse.textContent = "恭喜你触发红包雨福利";
+          } catch (error) {
+            duckResponse.textContent = "红包雨触发失败，请稍后再试";
+            console.error(error);
+          }
+        } else {
+          duckResponse.textContent = "恭喜你触发隐藏菜单";
         }
       }
 

@@ -37,3 +37,10 @@
 [2025-10-23 17:16:58] Implemented rain HTTP endpoint with logging.
 [2025-10-23 17:16:58] Refactored frontend grid rendering with shape-specific visuals and tank trigger display.
 [2025-10-23 17:16:58] Added rain animation/button and updated README for gameplay guidance.
+[2025-10-23 17:41:59] Added pause state handling and safer envelope spawning in backend.
+[2025-10-23 17:41:59] Extended HTTP API with pause endpoint and paused state reporting.
+[2025-10-23 17:41:59] Refreshed frontend UI with pause controls, enhanced shapes, and HUD alignment.
+[2025-10-23 17:41:59] Documented pause workflow and reset behaviour in README.
+[2025-10-23 17:48:13] Enabled static asset delivery and duck assistant UI.
+[2025-10-23 17:48:13] Added duck command dialog with rain trigger and responses.
+[2025-10-23 17:50:37] Allowed static assets outside web directory and fixed duck image path.

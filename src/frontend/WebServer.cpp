@@ -176,6 +176,16 @@ void WebServer::handleClient(int clientSocket) {
         } else if (method == "GET" && path == "/state") {
             responseBody = buildStateJson();
             contentType = "application/json";
+        } else if (method == "GET" && path.rfind("/static/", 0) == 0) {
+            const std::string relativePath = path.substr(1);  // remove leading slash
+            try {
+                responseBody = loadStaticFile(relativePath, contentType);
+            } catch (const std::exception& ex) {
+                backend::Logger::instance().log(std::string("Static asset missing: ") + relativePath +
+                                                " (" + ex.what() + ")");
+                sendNotFound(clientSocket);
+                return;
+            }
         } else if (method == "POST" && path == "/move") {
             responseBody = handleApiRequest(method, path, body, contentType, statusCode);
         } else if (method == "POST" && path == "/reset") {
@@ -360,7 +370,11 @@ std::string WebServer::buildStateJson() {
 }
 
 std::string WebServer::loadStaticFile(const std::string& targetPath, std::string& contentType) {
-    const std::filesystem::path fullPath = std::filesystem::path(m_staticDir) / targetPath;
+    std::filesystem::path fullPath = std::filesystem::path(m_staticDir) / targetPath;
+    if (!std::filesystem::exists(fullPath)) {
+        fullPath = std::filesystem::path(targetPath);
+    }
+
     if (!std::filesystem::exists(fullPath)) {
         throw std::runtime_error("Static file not found: " + fullPath.string());
     }
