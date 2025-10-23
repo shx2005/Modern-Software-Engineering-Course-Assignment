@@ -1,0 +1,3 @@
+C:/Users/曾宇阳/Downloads/Modern-Software-Engineering-Course-Assignment-main/out/build/x64-Debug/CMakeFiles/tank_red_envelope.dir
+C:/Users/曾宇阳/Downloads/Modern-Software-Engineering-Course-Assignment-main/out/build/x64-Debug/CMakeFiles/edit_cache.dir
+C:/Users/曾宇阳/Downloads/Modern-Software-Engineering-Course-Assignment-main/out/build/x64-Debug/CMakeFiles/rebuild_cache.dir
