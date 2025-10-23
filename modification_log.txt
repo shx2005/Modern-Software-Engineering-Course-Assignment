@@ -44,3 +44,6 @@
 [2025-10-23 17:48:13] Enabled static asset delivery and duck assistant UI.
 [2025-10-23 17:48:13] Added duck command dialog with rain trigger and responses.
 [2025-10-23 17:50:37] Allowed static assets outside web directory and fixed duck image path.
+[2025-10-23 17:53:29] Simplified envelope rendering to display numeric value only.
+[2025-10-23 18:01:17] Updated README to mirror latest features and modification log milestones.
+[2025-10-23 18:02:14] Fixed /pause routing to use backend handler and avoid 404.

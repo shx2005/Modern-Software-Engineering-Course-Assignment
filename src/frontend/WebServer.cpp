@@ -192,6 +192,8 @@ void WebServer::handleClient(int clientSocket) {
             responseBody = handleApiRequest(method, path, body, contentType, statusCode);
         } else if (method == "POST" && path == "/rain") {
             responseBody = handleApiRequest(method, path, body, contentType, statusCode);
+        } else if (method == "POST" && path == "/pause") {
+            responseBody = handleApiRequest(method, path, body, contentType, statusCode);
         } else {
             sendNotFound(clientSocket);
             backend::Logger::instance().log("Responded 404 for path " + path + ".");
@@ -290,6 +292,27 @@ std::string WebServer::handleApiRequest(const std::string& method,
                                         " bonus envelopes.");
         std::ostringstream oss;
         oss << R"({"success":true,"spawned":)" << spawned << "}";
+        return oss.str();
+    }
+
+    if (method == "POST" && path == "/pause") {
+        const std::string action = parseAction(body);
+        bool paused = false;
+        {
+            std::lock_guard<std::mutex> guard(m_engineMutex);
+            if (action == "pause") {
+                m_engine.pause();
+            } else if (action == "resume") {
+                m_engine.resume();
+            } else {
+                m_engine.togglePause();
+            }
+            paused = m_engine.isPaused();
+        }
+        backend::Logger::instance().log("Pause request '" + action + "' -> " +
+                                        std::string(paused ? "paused" : "running") + ".");
+        std::ostringstream oss;
+        oss << R"({"success":true,"paused":)" << (paused ? "true" : "false") << "}";
         return oss.str();
     }
 

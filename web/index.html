@@ -610,12 +610,6 @@
         right: document.getElementById("btn-right"),
       };
 
-      const sizeNameMap = {
-        small: "小",
-        medium: "中",
-        large: "大",
-      };
-
       let refreshTimer = null;
       let gameStarted = false;
       let gameFinished = false;
@@ -996,16 +990,12 @@
           content.className = `cell-content shape-${sizeKey}`;
           content.innerHTML = "";
 
-          const sizeSpan = document.createElement("span");
-          sizeSpan.classList.add("shape-size");
-          sizeSpan.textContent = sizeNameMap[sizeKey] ?? "";
-
           const valueSpan = document.createElement("span");
           valueSpan.classList.add("shape-value");
           valueSpan.textContent = envelope.value;
 
-          content.append(sizeSpan, valueSpan);
-          cell.title = `红包面额：${envelope.value}（${sizeNameMap[sizeKey] ?? ""}）`;
+          content.append(valueSpan);
+          cell.title = `红包面额：${envelope.value}`;
         });
 
         const tankIndex = state.tank.y * state.worldWidth + state.tank.x;
