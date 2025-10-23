@@ -79,6 +79,12 @@ void GameEngine::reset() {
     m_envelopes.reserve(static_cast<std::size_t>(m_config.initialEnvelopeCount));
     m_tank.setPosition({m_config.worldWidth / 2, m_config.worldHeight / 2});
     m_nextEnvelopeId = 0;
+<<<<<<< HEAD
+=======
+    m_paused = false;
+    m_pausedAccumulated = std::chrono::duration<double>{0.0};
+    m_pauseStart = {};
+>>>>>>> bdcdecfa8616715985974d5c31139b0637afe2d3
 
     for (int i = 0; i < m_config.initialEnvelopeCount; ++i) {
         m_envelopes.emplace_back(createRandomEnvelope(m_nextEnvelopeId++));
@@ -89,7 +95,11 @@ void GameEngine::reset() {
 }
 
 bool GameEngine::moveTank(MoveDirection direction) {
+<<<<<<< HEAD
     if (isTimeUp()) {
+=======
+    if (isTimeUp() || m_paused) {
+>>>>>>> bdcdecfa8616715985974d5c31139b0637afe2d3
         return false;
     }
 
@@ -106,9 +116,19 @@ double GameEngine::elapsedSeconds() const {
     if (m_startTime == std::chrono::steady_clock::time_point{}) {
         return 0.0;
     }
+<<<<<<< HEAD
     const auto now = std::chrono::steady_clock::now();
     const std::chrono::duration<double> diff = now - m_startTime;
     return diff.count();
+=======
+    auto now = std::chrono::steady_clock::now();
+    if (m_paused && m_pauseStart != std::chrono::steady_clock::time_point{}) {
+        now = m_pauseStart;
+    }
+    const std::chrono::duration<double> diff = now - m_startTime;
+    const double pausedSeconds = m_pausedAccumulated.count();
+    return std::max(0.0, diff.count() - pausedSeconds);
+>>>>>>> bdcdecfa8616715985974d5c31139b0637afe2d3
 }
 
 const Tank& GameEngine::getTank() const noexcept {
@@ -131,17 +151,82 @@ void GameEngine::setRandomSeed(unsigned int seed) {
     m_rng.seed(seed);
 }
 
+<<<<<<< HEAD
+=======
+int GameEngine::spawnBonusEnvelopes(int minCount, int maxCount) {
+    if (minCount <= 0) {
+        minCount = 1;
+    }
+    if (maxCount < minCount) {
+        maxCount = minCount;
+    }
+
+    std::uniform_int_distribution<int> countDist(minCount, maxCount);
+    const int spawnCount = countDist(m_rng);
+    for (int i = 0; i < spawnCount; ++i) {
+        m_envelopes.emplace_back(createRandomEnvelope(m_nextEnvelopeId++));
+    }
+
+    return spawnCount;
+}
+
+void GameEngine::pause() {
+    if (m_paused) {
+        return;
+    }
+    m_paused = true;
+    m_pauseStart = std::chrono::steady_clock::now();
+}
+
+void GameEngine::resume() {
+    if (!m_paused) {
+        return;
+    }
+    const auto now = std::chrono::steady_clock::now();
+    if (m_pauseStart != std::chrono::steady_clock::time_point{}) {
+        m_pausedAccumulated += now - m_pauseStart;
+    }
+    m_paused = false;
+    m_pauseStart = {};
+}
+
+bool GameEngine::togglePause() {
+    if (m_paused) {
+        resume();
+    } else {
+        pause();
+    }
+    return m_paused;
+}
+
+bool GameEngine::isPaused() const noexcept {
+    return m_paused;
+}
+
+>>>>>>> bdcdecfa8616715985974d5c31139b0637afe2d3
 RedEnvelope GameEngine::createRandomEnvelope(std::size_t id) {
     std::uniform_int_distribution<int> widthDist(0, m_config.worldWidth - 1);
     std::uniform_int_distribution<int> heightDist(0, m_config.worldHeight - 1);
 
     EnvelopeSize size = pickRandomSize(m_rng);
     Position position{widthDist(m_rng), heightDist(m_rng)};
+<<<<<<< HEAD
 
     bool foundFreeSpot = false;
     for (int attempts = 0; attempts < 100; ++attempts) {
         position = {widthDist(m_rng), heightDist(m_rng)};
         if (position.x == m_tank.getPosition().x && position.y == m_tank.getPosition().y) {
+=======
+    const Position tankPos = m_tank.getPosition();
+
+    bool foundFreeSpot = false;
+    for (int attempts = 0; attempts < 150; ++attempts) {
+        position = {widthDist(m_rng), heightDist(m_rng)};
+        const int radius = radiusForSize(size);
+        const int dxTank = position.x - tankPos.x;
+        const int dyTank = position.y - tankPos.y;
+        if (dxTank * dxTank + dyTank * dyTank <= radius * radius) {
+>>>>>>> bdcdecfa8616715985974d5c31139b0637afe2d3
             continue;
         }
 

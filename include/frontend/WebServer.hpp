@@ -43,6 +43,10 @@ private:
     std::string buildStateJson();
     std::string loadStaticFile(const std::string& targetPath, std::string& contentType);
     backend::MoveDirection parseDirection(const std::string& payload) const;
+<<<<<<< HEAD
+=======
+    std::string parseAction(const std::string& payload) const;
+>>>>>>> bdcdecfa8616715985974d5c31139b0637afe2d3
 };
 
 }  // namespace frontend

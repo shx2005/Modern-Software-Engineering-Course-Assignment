@@ -176,10 +176,28 @@ void WebServer::handleClient(int clientSocket) {
         } else if (method == "GET" && path == "/state") {
             responseBody = buildStateJson();
             contentType = "application/json";
+<<<<<<< HEAD
+=======
+        } else if (method == "GET" && path.rfind("/static/", 0) == 0) {
+            const std::string relativePath = path.substr(1);  // remove leading slash
+            try {
+                responseBody = loadStaticFile(relativePath, contentType);
+            } catch (const std::exception& ex) {
+                backend::Logger::instance().log(std::string("Static asset missing: ") + relativePath +
+                                                " (" + ex.what() + ")");
+                sendNotFound(clientSocket);
+                return;
+            }
+>>>>>>> bdcdecfa8616715985974d5c31139b0637afe2d3
         } else if (method == "POST" && path == "/move") {
             responseBody = handleApiRequest(method, path, body, contentType, statusCode);
         } else if (method == "POST" && path == "/reset") {
             responseBody = handleApiRequest(method, path, body, contentType, statusCode);
+<<<<<<< HEAD
+=======
+        } else if (method == "POST" && path == "/rain") {
+            responseBody = handleApiRequest(method, path, body, contentType, statusCode);
+>>>>>>> bdcdecfa8616715985974d5c31139b0637afe2d3
         } else {
             sendNotFound(clientSocket);
             backend::Logger::instance().log("Responded 404 for path " + path + ".");
@@ -268,6 +286,43 @@ std::string WebServer::handleApiRequest(const std::string& method,
         return R"({"success":true})";
     }
 
+<<<<<<< HEAD
+=======
+    if (method == "POST" && path == "/rain") {
+        int spawned = 0;
+        {
+            std::lock_guard<std::mutex> guard(m_engineMutex);
+            spawned = m_engine.spawnBonusEnvelopes(5, 10);
+        }
+        backend::Logger::instance().log("Rain request spawned " + std::to_string(spawned) +
+                                        " bonus envelopes.");
+        std::ostringstream oss;
+        oss << R"({"success":true,"spawned":)" << spawned << "}";
+        return oss.str();
+    }
+
+    if (method == "POST" && path == "/pause") {
+        const std::string action = parseAction(body);
+        bool paused = false;
+        {
+            std::lock_guard<std::mutex> guard(m_engineMutex);
+            if (action == "pause") {
+                m_engine.pause();
+            } else if (action == "resume") {
+                m_engine.resume();
+            } else {
+                m_engine.togglePause();
+            }
+            paused = m_engine.isPaused();
+        }
+        backend::Logger::instance().log("Pause request '" + action + "' -> " +
+                                        std::string(paused ? "paused" : "running") + ".");
+        std::ostringstream oss;
+        oss << R"({"success":true,"paused":)" << (paused ? "true" : "false") << "}";
+        return oss.str();
+    }
+
+>>>>>>> bdcdecfa8616715985974d5c31139b0637afe2d3
     statusCode = 404;
     backend::Logger::instance().log("API path not found: " + path);
     return R"({"error":"Unsupported API path"})";
@@ -290,6 +345,10 @@ std::string WebServer::buildStateJson() {
         << R"(,"tank":{"x":)" << tankPos.x << R"(,"y":)" << tankPos.y << "},"
         << R"("stats":{"count":)" << stats.collectedCount
         << R"(,"value":)" << stats.collectedValue << "},"
+<<<<<<< HEAD
+=======
+        << R"("paused":)" << (m_engine.isPaused() ? "true" : "false") << ","
+>>>>>>> bdcdecfa8616715985974d5c31139b0637afe2d3
         << R"("envelopes":[)";
 
     const auto& envelopes = m_engine.getEnvelopes();
@@ -323,7 +382,15 @@ std::string WebServer::buildStateJson() {
 }
 
 std::string WebServer::loadStaticFile(const std::string& targetPath, std::string& contentType) {
+<<<<<<< HEAD
     const std::filesystem::path fullPath = std::filesystem::path(m_staticDir) / targetPath;
+=======
+    std::filesystem::path fullPath = std::filesystem::path(m_staticDir) / targetPath;
+    if (!std::filesystem::exists(fullPath)) {
+        fullPath = std::filesystem::path(targetPath);
+    }
+
+>>>>>>> bdcdecfa8616715985974d5c31139b0637afe2d3
     if (!std::filesystem::exists(fullPath)) {
         throw std::runtime_error("Static file not found: " + fullPath.string());
     }
@@ -366,4 +433,20 @@ backend::MoveDirection WebServer::parseDirection(const std::string& payload) con
     return backend::MoveDirection::None;
 }
 
+<<<<<<< HEAD
+=======
+std::string WebServer::parseAction(const std::string& payload) const {
+    if (payload.find("resume") != std::string::npos) {
+        return "resume";
+    }
+    if (payload.find("pause") != std::string::npos) {
+        return "pause";
+    }
+    if (payload.find("toggle") != std::string::npos) {
+        return "toggle";
+    }
+    return "toggle";
+}
+
+>>>>>>> bdcdecfa8616715985974d5c31139b0637afe2d3
 }  // namespace frontend

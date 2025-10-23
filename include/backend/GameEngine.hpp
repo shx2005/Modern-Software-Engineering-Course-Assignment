@@ -41,6 +41,14 @@ public:
     const GameConfig& getConfig() const noexcept;
 
     void setRandomSeed(unsigned int seed);
+<<<<<<< HEAD
+=======
+    int spawnBonusEnvelopes(int minCount, int maxCount);
+    void pause();
+    void resume();
+    bool togglePause();
+    bool isPaused() const noexcept;
+>>>>>>> bdcdecfa8616715985974d5c31139b0637afe2d3
 
 private:
     GameConfig m_config;
@@ -50,6 +58,12 @@ private:
     std::mt19937 m_rng;
     std::chrono::steady_clock::time_point m_startTime;
     std::size_t m_nextEnvelopeId{0};
+<<<<<<< HEAD
+=======
+    bool m_paused{false};
+    std::chrono::duration<double> m_pausedAccumulated{0.0};
+    std::chrono::steady_clock::time_point m_pauseStart{};
+>>>>>>> bdcdecfa8616715985974d5c31139b0637afe2d3
 
     RedEnvelope createRandomEnvelope(std::size_t id);
     void respawnEnvelope(std::size_t index);

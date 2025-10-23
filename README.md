@@ -7,10 +7,17 @@ This project implements a browser-playable tank game written in modern C++ with 
 ```
 include/
   backend/       # Public interfaces for game logic (engine, entities)
+<<<<<<< HEAD
   frontend/      # Console and web server declarations
 src/
   backend/       # Game logic implementations
   frontend/      # Console UI (legacy), web server, and HTTP entry point
+=======
+  frontend/      # Web server declarations
+src/
+  backend/       # Game logic implementations
+  frontend/      # Web server and HTTP entry point
+>>>>>>> bdcdecfa8616715985974d5c31139b0637afe2d3
 web/             # Static HTML/CSS/JS assets rendered in the browser
 logs/            # Runtime log files (overwritten on each execution)
 bin/             # Generated executable output (created after build)
@@ -51,9 +58,24 @@ Open a browser at `http://localhost:<port>` to play. Use the on-screen buttons o
 
 ### Gameplay HUD
 
+<<<<<<< HEAD
 - 每个红包的面额直接绘制在方块内，拾取后实时统计到顶部 HUD。
 - 倒计时结束时自动弹出本局总结，包括红包数量与总金额，并禁用移动操作。
 
+=======
+- 首次进入页面时需点击“开始游戏”按钮，计时器与移动控制才会激活。
+- 每个红包的面额直接绘制在方块内，拾取后实时统计到顶部 HUD。
+- 倒计时结束时自动弹出本局总结，包括红包数量与总金额，并禁用移动操作。
+
+### 互动玩法
+
+- 控制面板左下角的“红包雨”按钮会播放红包雨动画，结束后随机新增 5～10 个红包。
+- 红包根据面额分为小（圆形）、中（菱形）与大（六边形）三种形态，便于快速识别。
+- 坦克拾取体积通过虚线圈实时标识，同时 HUD 卡片提醒其作用范围。
+- “暂停/继续”按钮可随时冻结或恢复计时，暂停时方向键与红包雨操作会被禁止。
+- 重新开始会清零红包数量与金额统计，并重新生成避开坦克触发范围的红包。
+
+>>>>>>> bdcdecfa8616715985974d5c31139b0637afe2d3
 ## Logging
 
 The service writes timestamped logs to `logs/server.log` while mirroring the same content to the console. The file is truncated on each launch to simplify debugging sessions.
