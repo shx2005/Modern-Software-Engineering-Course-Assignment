@@ -29,3 +29,11 @@
 [2025-10-16 17:50:22] Wired logger into server startup and request handling.
 [2025-10-16 17:50:22] Enhanced web UI to render envelope amounts and end-of-game summary.
 [2025-10-16 17:50:22] Documented UI/logging updates in README.
+[2025-10-16 17:58:08] Added start overlay workflow requiring button click before gameplay.
+[2025-10-16 17:58:08] Updated README to document start button requirement.
+[2025-10-23 16:59:19] Removed legacy console frontend sources to keep HTML-only client.
+[2025-10-23 16:59:19] Updated README to reflect HTML-only frontend.
+[2025-10-23 17:16:58] Added bonus envelope spawning API for rain feature.
+[2025-10-23 17:16:58] Implemented rain HTTP endpoint with logging.
+[2025-10-23 17:16:58] Refactored frontend grid rendering with shape-specific visuals and tank trigger display.
+[2025-10-23 17:16:58] Added rain animation/button and updated README for gameplay guidance.

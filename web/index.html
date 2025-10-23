@@ -35,11 +35,9 @@
       }
 
       .hud {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
         gap: 1rem;
-        flex-wrap: wrap;
         margin-bottom: 1rem;
       }
 
@@ -48,7 +46,6 @@
         padding: 0.75rem 1.25rem;
         border-radius: 0.75rem;
         box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
-        min-width: 180px;
       }
 
       .grid-container {
@@ -70,32 +67,106 @@
         height: 20px;
         background: #3a3f4b;
         border-radius: 3px;
-        transition: transform 0.1s ease-out;
+        position: relative;
+        overflow: visible;
+      }
+
+      .cell-content {
+        width: 100%;
+        height: 100%;
         display: flex;
+        flex-direction: column;
         align-items: center;
         justify-content: center;
+        gap: 2px;
+        color: #0e1116;
+        user-select: none;
+        border-radius: 6px;
+        position: relative;
+        transition: transform 0.1s ease-out;
+        background: rgba(58, 63, 75, 0.0);
+      }
+
+      .cell-content span {
+        pointer-events: none;
+      }
+
+      .shape-small {
+        width: 80%;
+        height: 80%;
+        background: #ffd36b;
+        border-radius: 50%;
+        transform: scale(0.8);
+        box-shadow: 0 0 6px rgba(255, 211, 107, 0.55);
+      }
+
+      .shape-medium {
+        width: 90%;
+        height: 90%;
+        background: #ff9f1c;
+        transform: rotate(45deg) scale(0.9);
+        box-shadow: 0 0 8px rgba(255, 159, 28, 0.55);
+      }
+
+      .shape-medium .shape-size,
+      .shape-medium .shape-value {
+        transform: rotate(-45deg);
+      }
+
+      .shape-large {
+        width: 105%;
+        height: 105%;
+        background: #ff4d6d;
+        clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+        transform: scale(1.05);
+        box-shadow: 0 0 10px rgba(255, 77, 109, 0.55);
+      }
+
+      .shape-size {
+        font-size: 0.6rem;
+        font-weight: 800;
+        line-height: 1;
+        color: #0e1116;
+      }
+
+      .shape-value {
         font-size: 0.7rem;
         font-weight: 700;
-        color: #1f242d;
-        user-select: none;
+        line-height: 1;
+        color: #0e1116;
       }
 
-      .cell.envelope-small {
-        background: #ffd36b;
-      }
-
-      .cell.envelope-medium {
-        background: #ff9f1c;
-      }
-
-      .cell.envelope-large {
-        background: #ff4d6d;
-      }
-
-      .cell.tank {
+      .cell-content.tank {
         background: #4acf81;
-        transform: scale(1.1);
-        box-shadow: 0 0 6px rgba(74, 207, 129, 0.8);
+        color: #0e1116;
+        font-size: 0.9rem;
+        border-radius: 8px;
+        box-shadow: 0 0 8px rgba(74, 207, 129, 0.8);
+        width: 90%;
+        height: 90%;
+      }
+
+      .cell.tank-trigger::after {
+        content: "";
+        position: absolute;
+        pointer-events: none;
+        width: 60px;
+        height: 60px;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        border: 2px dashed rgba(74, 207, 129, 0.45);
+        border-radius: 50%;
+        animation: pulse 1.6s ease-in-out infinite alternate;
+      }
+
+      @keyframes pulse {
+        from {
+          opacity: 0.25;
+        }
+        to {
+          opacity: 0.65;
+        }
       }
 
       .controls {
@@ -111,6 +182,23 @@
         grid-template-columns: repeat(3, 64px);
         grid-template-rows: repeat(3, 64px);
         gap: 0.5rem;
+      }
+
+      .control-helpers {
+        display: flex;
+        justify-content: flex-start;
+        align-items: center;
+        gap: 0.75rem;
+        width: 100%;
+        margin-top: 0.5rem;
+        flex-wrap: wrap;
+      }
+
+      .controls-hint {
+        width: 100%;
+        color: rgba(248, 248, 242, 0.65);
+        font-size: 0.85rem;
+        text-align: left;
       }
 
       button {
@@ -139,6 +227,15 @@
       .wide-button {
         padding: 0.7rem 1.4rem;
         width: 260px;
+      }
+
+      .wide-button.secondary {
+        background: #3a3f4b;
+      }
+
+      .wide-button.secondary:hover,
+      .wide-button.secondary:focus {
+        background: #5d6578;
       }
 
       footer {
@@ -171,6 +268,98 @@
         line-height: 1.6;
       }
 
+      .overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(14, 17, 22, 0.88);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 100;
+        backdrop-filter: blur(3px);
+      }
+
+      .overlay[hidden] {
+        display: none;
+      }
+
+      .overlay-card {
+        background: rgba(32, 37, 48, 0.94);
+        padding: 2rem 2.5rem;
+        border-radius: 1.5rem;
+        text-align: center;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+        max-width: 360px;
+      }
+
+      .overlay-card h2 {
+        margin: 0 0 0.75rem;
+        font-size: 1.4rem;
+      }
+
+      .overlay-card p {
+        margin: 0 0 1.25rem;
+        line-height: 1.6;
+        color: rgba(248, 248, 242, 0.85);
+      }
+
+      #rain-overlay {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        overflow: hidden;
+        display: none;
+        z-index: 90;
+      }
+
+      #rain-overlay.active {
+        display: block;
+      }
+
+      .rain-drop {
+        position: absolute;
+        top: -10%;
+        width: 28px;
+        height: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        animation-name: rain-fall;
+        animation-timing-function: linear;
+        animation-fill-mode: forwards;
+      }
+
+      .rain-drop span {
+        pointer-events: none;
+      }
+
+      .rain-drop.shape-medium {
+        transform: rotate(45deg);
+      }
+
+      .rain-drop.shape-medium span {
+        transform: rotate(-45deg);
+      }
+
+      .rain-drop.shape-large {
+        clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+      }
+
+      @keyframes rain-fall {
+        0% {
+          transform: translateY(-120%) scale(0.8);
+          opacity: 0;
+        }
+        10% {
+          opacity: 1;
+        }
+        100% {
+          transform: translateY(140vh) scale(1.1);
+          opacity: 0;
+        }
+      }
+
       @media (max-width: 768px) {
         .cell {
           width: 16px;
@@ -193,6 +382,14 @@
       <h1>坦克红包挑战</h1>
       <p>使用方向键或点击按钮移动坦克，抢在时间结束前拾取更多红包！</p>
     </header>
+    <div id="start-overlay" class="overlay">
+      <div class="overlay-card">
+        <h2>准备好开始了吗？</h2>
+        <p>点击下方按钮后，倒计时即刻启动，坦克可以移动抢红包。</p>
+        <button id="btn-start" class="wide-button">开始游戏</button>
+      </div>
+    </div>
+    <div id="rain-overlay"></div>
     <main>
       <section class="hud">
         <div class="hud-card">
@@ -210,6 +407,10 @@
         <div class="hud-card">
           <div>当前状态</div>
           <div class="status" id="game-status">加载中...</div>
+        </div>
+        <div class="hud-card">
+          <div>触发体积</div>
+          <div class="status">虚线圈即为坦克拾取范围</div>
         </div>
       </section>
 
@@ -229,8 +430,12 @@
           <button id="btn-down">▼</button>
           <div></div>
         </div>
-        <button id="btn-reset" class="wide-button">重新开始</button>
-        <div>提示：也可以使用键盘 W/A/S/D 或箭头键来移动坦克。</div>
+        <div class="control-helpers">
+          <button id="btn-rain" class="wide-button secondary">红包雨</button>
+          <button id="btn-pause" class="wide-button secondary">暂停</button>
+          <button id="btn-reset" class="wide-button">重新开始</button>
+        </div>
+        <div class="controls-hint">提示：也可以使用键盘 W/A/S/D 或箭头键来移动坦克。</div>
       </section>
       <section id="game-summary" class="summary" hidden>
         <h2>本局总结</h2>
@@ -239,7 +444,7 @@
     </main>
     <footer>端口由服务器控制（默认 8080），可通过命令行或环境变量 TANK_GAME_PORT 调整。</footer>
 
-    <script>
+        <script>
       const timeLeftEl = document.getElementById("time-left");
       const countEl = document.getElementById("count");
       const valueEl = document.getElementById("value");
@@ -247,6 +452,12 @@
       const statusEl = document.getElementById("game-status");
       const summaryEl = document.getElementById("game-summary");
       const summaryBodyEl = document.getElementById("summary-body");
+      const startOverlay = document.getElementById("start-overlay");
+      const startButton = document.getElementById("btn-start");
+      const resetButton = document.getElementById("btn-reset");
+      const rainButton = document.getElementById("btn-rain");
+      const pauseButton = document.getElementById("btn-pause");
+      const rainOverlay = document.getElementById("rain-overlay");
 
       const directionButtons = {
         up: document.getElementById("btn-up"),
@@ -255,29 +466,236 @@
         right: document.getElementById("btn-right"),
       };
 
-      document.getElementById("btn-reset").addEventListener("click", async () => {
-        await fetch("/reset", { method: "POST" });
-        await refreshState();
-      });
+      const sizeNameMap = {
+        small: "小",
+        medium: "中",
+        large: "大",
+      };
+
+      let refreshTimer = null;
+      let gameStarted = false;
+      let gameFinished = false;
+      let gamePaused = false;
+      let rainInProgress = false;
+
+      const RAIN_DROP_COUNT = 24;
+      const RAIN_ANIMATION_DURATION = 3400;
+
+      function setControlsEnabled(enabled) {
+        Object.values(directionButtons).forEach((button) => {
+          button.disabled = !enabled;
+        });
+      }
+
+      function startPolling() {
+        if (refreshTimer) {
+          clearInterval(refreshTimer);
+        }
+        refreshTimer = setInterval(() => refreshState(), 500);
+      }
+
+      function stopPolling() {
+        if (refreshTimer) {
+          clearInterval(refreshTimer);
+          refreshTimer = null;
+        }
+      }
+
+      function delay(ms) {
+        return new Promise((resolve) => setTimeout(resolve, ms));
+      }
+
+      function setHudPlaceholders() {
+        timeLeftEl.textContent = "--";
+        countEl.textContent = "0";
+        valueEl.textContent = "0";
+      }
+
+      setControlsEnabled(false);
+      resetButton.disabled = true;
+      pauseButton.disabled = true;
+      rainButton.disabled = true;
+      statusEl.textContent = "等待开始";
+
+      startButton.addEventListener("click", startGame);
+      resetButton.addEventListener("click", resetGame);
+      rainButton.addEventListener("click", triggerRain);
+      pauseButton.addEventListener("click", togglePause);
 
       for (const [direction, button] of Object.entries(directionButtons)) {
         button.addEventListener("click", () => sendMove(direction));
       }
 
-      async function sendMove(direction) {
-        if (directionButtons.up.disabled) {
+      async function startGame() {
+        if (gameStarted) {
           return;
         }
-        await fetch("/move", {
-          method: "POST",
-          headers: { "Content-Type": "application/x-www-form-urlencoded" },
-          body: `direction=${direction}`,
-        });
-        await refreshState();
+        startButton.disabled = true;
+        setHudPlaceholders();
+        statusEl.textContent = "正在准备游戏...";
+        try {
+          const response = await fetch("/reset", { method: "POST" });
+          if (!response.ok) {
+            throw new Error("reset failed");
+          }
+          gameStarted = true;
+          gameFinished = false;
+          gamePaused = false;
+          rainInProgress = false;
+          startOverlay.hidden = true;
+          pauseButton.disabled = false;
+          pauseButton.textContent = "暂停";
+          resetButton.disabled = false;
+          rainButton.disabled = false;
+          await refreshState(true);
+          startPolling();
+          statusEl.textContent = "游戏进行中";
+        } catch (error) {
+          statusEl.textContent = "启动失败，请稍后重试";
+          startButton.disabled = false;
+          gameStarted = false;
+          console.error(error);
+        }
+      }
+
+      async function resetGame() {
+        if (!gameStarted) {
+          return;
+        }
+        stopPolling();
+        resetButton.disabled = true;
+        pauseButton.disabled = true;
+        statusEl.textContent = "正在重置...";
+        setHudPlaceholders();
+        try {
+          const response = await fetch("/reset", { method: "POST" });
+          if (!response.ok) {
+            throw new Error("reset failed");
+          }
+          gameFinished = false;
+          gamePaused = false;
+          rainInProgress = false;
+          rainOverlay.classList.remove("active");
+          rainOverlay.innerHTML = "";
+          pauseButton.textContent = "暂停";
+          await refreshState(true);
+          startPolling();
+          statusEl.textContent = "游戏进行中";
+        } catch (error) {
+          statusEl.textContent = "重置失败，请重试";
+          console.error(error);
+        } finally {
+          resetButton.disabled = false;
+          pauseButton.disabled = !gameStarted;
+          rainButton.disabled = gameFinished || gamePaused;
+        }
+      }
+
+      async function togglePause() {
+        if (!gameStarted || gameFinished) {
+          return;
+        }
+        pauseButton.disabled = true;
+        statusEl.textContent = gamePaused ? "继续游戏中..." : "正在暂停...";
+        try {
+          const response = await fetch("/pause", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: "action=toggle",
+          });
+          if (!response.ok) {
+            throw new Error("pause failed");
+          }
+          const data = await response.json();
+          gamePaused = Boolean(data.paused);
+          pauseButton.textContent = gamePaused ? "继续" : "暂停";
+          if (gamePaused) {
+            stopPolling();
+          } else {
+            startPolling();
+          }
+          await refreshState(true);
+          statusEl.textContent = gamePaused ? "暂停中" : "游戏进行中";
+        } catch (error) {
+          statusEl.textContent = "暂停操作失败，请重试";
+          console.error(error);
+        } finally {
+          pauseButton.disabled = false;
+          rainButton.disabled = gameFinished || gamePaused || rainInProgress;
+        }
+      }
+
+      async function triggerRain() {
+        if (!gameStarted || gameFinished || rainInProgress || gamePaused) {
+          return;
+        }
+        rainInProgress = true;
+        rainButton.disabled = true;
+        statusEl.textContent = "红包雨准备中...";
+        startRainAnimation();
+        try {
+          await delay(RAIN_ANIMATION_DURATION);
+          const response = await fetch("/rain", { method: "POST" });
+          if (!response.ok) {
+            throw new Error("rain failed");
+          }
+          const data = await response.json();
+          await refreshState();
+          statusEl.textContent = `红包雨降临，新增 ${data.spawned ?? 0} 个红包！`;
+        } catch (error) {
+          statusEl.textContent = "红包雨触发失败，请重试";
+          console.error(error);
+        } finally {
+          rainInProgress = false;
+          rainButton.disabled = gameFinished || gamePaused;
+        }
+      }
+
+      function startRainAnimation() {
+        rainOverlay.innerHTML = "";
+        rainOverlay.classList.add("active");
+        for (let i = 0; i < RAIN_DROP_COUNT; i += 1) {
+          const drop = document.createElement("div");
+          drop.classList.add("rain-drop");
+          const sizeIndex = Math.floor(Math.random() * 3);
+          const sizeClass =
+            sizeIndex === 0 ? "shape-small" : sizeIndex === 1 ? "shape-medium" : "shape-large";
+          drop.classList.add(sizeClass);
+          const label = document.createElement("span");
+          label.classList.add("shape-size");
+          label.textContent = sizeIndex === 0 ? "小" : sizeIndex === 1 ? "中" : "大";
+          drop.appendChild(label);
+          drop.style.left = `${Math.random() * 100}%`;
+          const delayValue = Math.random() * 0.6;
+          const duration = 1.8 + Math.random() * 0.8;
+          drop.style.animationDelay = `${delayValue}s`;
+          drop.style.animationDuration = `${duration}s`;
+          rainOverlay.appendChild(drop);
+        }
+        setTimeout(() => {
+          rainOverlay.classList.remove("active");
+          rainOverlay.innerHTML = "";
+        }, RAIN_ANIMATION_DURATION);
+      }
+
+      async function sendMove(direction) {
+        if (!gameStarted || directionButtons.up.disabled || gamePaused) {
+          return;
+        }
+        try {
+          await fetch("/move", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: `direction=${direction}`,
+          });
+          await refreshState();
+        } catch (error) {
+          console.error(error);
+        }
       }
 
       document.addEventListener("keydown", (event) => {
-        if (directionButtons.up.disabled) {
+        if (!gameStarted || directionButtons.up.disabled || gamePaused) {
           return;
         }
         switch (event.key) {
@@ -302,14 +720,25 @@
         }
       });
 
-      async function refreshState() {
+      async function refreshState(force = false) {
+        if (!gameStarted && !force) {
+          return;
+        }
         try {
           const response = await fetch("/state");
+          if (!response.ok) {
+            throw new Error("state fetch failed");
+          }
           const data = await response.json();
           renderState(data);
         } catch (error) {
           statusEl.textContent = "无法连接服务器";
           summaryEl.hidden = true;
+          setControlsEnabled(false);
+          resetButton.disabled = true;
+          pauseButton.disabled = true;
+          rainButton.disabled = true;
+          console.error(error);
         }
       }
 
@@ -317,8 +746,19 @@
         timeLeftEl.textContent = state.timeLeft.toFixed(1);
         countEl.textContent = state.stats.count;
         valueEl.textContent = state.stats.value;
+
+        gamePaused = Boolean(state.paused);
         const finished = state.timeLeft <= 0;
-        statusEl.textContent = finished ? "时间结束" : "游戏进行中";
+        gameFinished = finished;
+
+        if (finished) {
+          statusEl.textContent = "时间结束";
+        } else if (gamePaused) {
+          statusEl.textContent = "暂停中";
+        } else {
+          statusEl.textContent = "游戏进行中";
+        }
+
         if (finished) {
           summaryEl.hidden = false;
           summaryBodyEl.innerHTML =
@@ -327,9 +767,12 @@
         } else {
           summaryEl.hidden = true;
         }
-        Object.values(directionButtons).forEach((button) => {
-          button.disabled = finished;
-        });
+
+        setControlsEnabled(!finished && !gamePaused);
+        rainButton.disabled = finished || gamePaused || rainInProgress;
+        pauseButton.disabled = !gameStarted || finished;
+        pauseButton.textContent = gamePaused ? "继续" : "暂停";
+        resetButton.disabled = !gameStarted;
 
         gridEl.style.gridTemplateColumns = `repeat(${state.worldWidth}, 20px)`;
         gridEl.innerHTML = "";
@@ -339,38 +782,49 @@
           for (let x = 0; x < state.worldWidth; x += 1) {
             const cell = document.createElement("div");
             cell.classList.add("cell");
-            cells.push(cell);
+            const content = document.createElement("div");
+            content.classList.add("cell-content");
+            cell.appendChild(content);
+            cells.push({ cell, content });
             gridEl.appendChild(cell);
           }
         }
 
         state.envelopes.forEach((envelope) => {
           const index = envelope.y * state.worldWidth + envelope.x;
-          if (index >= 0 && index < cells.length) {
-            const cell = cells[index];
-            if (envelope.size === "Small") {
-              cell.classList.add("envelope-small");
-            } else if (envelope.size === "Medium") {
-              cell.classList.add("envelope-medium");
-            } else {
-              cell.classList.add("envelope-large");
-            }
-            cell.textContent = envelope.value;
-            cell.title = `红包金额：${envelope.value}`;
+          if (index < 0 || index >= cells.length) {
+            return;
           }
+          const { cell, content } = cells[index];
+          const sizeKey = ((envelope.size || "Small") + "").toLowerCase();
+          content.className = `cell-content shape-${sizeKey}`;
+          content.innerHTML = "";
+
+          const sizeSpan = document.createElement("span");
+          sizeSpan.classList.add("shape-size");
+          sizeSpan.textContent = sizeNameMap[sizeKey] ?? "";
+
+          const valueSpan = document.createElement("span");
+          valueSpan.classList.add("shape-value");
+          valueSpan.textContent = envelope.value;
+
+          content.append(sizeSpan, valueSpan);
+          cell.title = `红包面额：${envelope.value}（${sizeNameMap[sizeKey] ?? ""}）`;
         });
 
         const tankIndex = state.tank.y * state.worldWidth + state.tank.x;
         if (tankIndex >= 0 && tankIndex < cells.length) {
-          const tankCell = cells[tankIndex];
-          tankCell.classList.add("tank");
-          tankCell.textContent = "坦";
-          tankCell.title = "玩家坦克";
+          const { cell, content } = cells[tankIndex];
+          cell.classList.add("tank-trigger");
+          content.className = "cell-content tank";
+          content.innerHTML = "";
+          const label = document.createElement("span");
+          label.classList.add("shape-value");
+          label.textContent = "坦";
+          content.appendChild(label);
+          cell.title = "玩家坦克（虚线圈即为触发体积）";
         }
       }
-
-      setInterval(refreshState, 500);
-      refreshState();
     </script>
   </body>
 </html>

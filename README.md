@@ -7,10 +7,10 @@ This project implements a browser-playable tank game written in modern C++ with 
 ```
 include/
   backend/       # Public interfaces for game logic (engine, entities)
-  frontend/      # Console and web server declarations
+  frontend/      # Web server declarations
 src/
   backend/       # Game logic implementations
-  frontend/      # Console UI (legacy), web server, and HTTP entry point
+  frontend/      # Web server and HTTP entry point
 web/             # Static HTML/CSS/JS assets rendered in the browser
 logs/            # Runtime log files (overwritten on each execution)
 bin/             # Generated executable output (created after build)
@@ -51,8 +51,15 @@ Open a browser at `http://localhost:<port>` to play. Use the on-screen buttons o
 
 ### Gameplay HUD
 
+- 首次进入页面时需点击“开始游戏”按钮，计时器与移动控制才会激活。
 - 每个红包的面额直接绘制在方块内，拾取后实时统计到顶部 HUD。
 - 倒计时结束时自动弹出本局总结，包括红包数量与总金额，并禁用移动操作。
+
+### 互动玩法
+
+- 控制面板左下角的“红包雨”按钮会播放红包雨动画，结束后随机新增 5～10 个红包。
+- 红包根据面额分为小（圆形）、中（菱形）与大（六边形）三种形态，便于快速识别。
+- 坦克拾取体积通过虚线圈实时标识，同时 HUD 卡片提醒其作用范围。
 
 ## Logging
 
