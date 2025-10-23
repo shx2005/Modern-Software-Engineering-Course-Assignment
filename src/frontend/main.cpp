@@ -54,7 +54,7 @@ int main(int argc, char* argv[]) {
     backend::GameConfig config;
     config.worldWidth = 30;
     config.worldHeight = 20;
-    config.initialEnvelopeCount = 12;
+    config.initialEnvelopeCount = 14;
     config.timeLimitSeconds = 60;
 
     backend::GameEngine engine(config);
