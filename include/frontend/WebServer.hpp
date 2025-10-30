@@ -5,6 +5,7 @@
 #pragma once
 
 #include "backend/GameEngine.hpp"
+#include "backend/CodeStats.hpp"
 
 #include <mutex>
 #include <string>
@@ -44,6 +45,9 @@ private:
     std::string loadStaticFile(const std::string& targetPath, std::string& contentType);
     backend::MoveDirection parseDirection(const std::string& payload) const;
     std::string parseAction(const std::string& payload) const;
+    std::string parseDirectory(const std::string& payload) const;
+    std::string buildCodeStatsJson(const backend::CodeStatsResult& result,
+                                   const std::string& directory) const;
 };
 
 }  // namespace frontend

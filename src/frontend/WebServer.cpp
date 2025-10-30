@@ -13,6 +13,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <cstdlib>
 #include <cstring>
 #include <filesystem>
 #include <fstream>
@@ -194,6 +195,8 @@ void WebServer::handleClient(int clientSocket) {
             responseBody = handleApiRequest(method, path, body, contentType, statusCode);
         } else if (method == "POST" && path == "/pause") {
             responseBody = handleApiRequest(method, path, body, contentType, statusCode);
+        } else if (method == "POST" && path == "/codestats") {
+            responseBody = handleApiRequest(method, path, body, contentType, statusCode);
         } else {
             sendNotFound(clientSocket);
             backend::Logger::instance().log("Responded 404 for path " + path + ".");
@@ -337,6 +340,28 @@ std::string WebServer::handleApiRequest(const std::string& method,
         return oss.str();
     }
 
+    if (method == "POST" && path == "/codestats") {
+        const std::string directory = parseDirectory(body);
+        backend::CodeStatsAnalyzer analyzer;
+        const std::string targetDir = directory.empty() ? "." : directory;
+        backend::CodeStatsResult stats = analyzer.analyze(targetDir);
+        contentType = "application/json";
+        if (!stats.withinWorkspace) {
+            backend::Logger::instance().log(
+                "Code stats rejected for directory '" + targetDir + "' (outside workspace).");
+            statusCode = 403;
+            return R"({"success":false,"error":"Directory must stay within workspace."})";
+        }
+        if (!stats.directoryExists) {
+            backend::Logger::instance().log(
+                "Code stats failed: directory '" + targetDir + "' not found.");
+            statusCode = 404;
+            return R"({"success":false,"error":"Directory does not exist."})";
+        }
+        backend::Logger::instance().log("Code stats computed for directory '" + targetDir + "'.");
+        return buildCodeStatsJson(stats, targetDir);
+    }
+
     statusCode = 404;
     backend::Logger::instance().log("API path not found: " + path);
     return R"({"error":"Unsupported API path"})";
@@ -451,6 +476,63 @@ std::string WebServer::parseAction(const std::string& payload) const {
         return "toggle";
     }
     return "toggle";
+}
+
+std::string WebServer::parseDirectory(const std::string& payload) const {
+    const std::string key = "directory=";
+    const std::size_t pos = payload.find(key);
+    if (pos == std::string::npos) {
+        return {};
+    }
+    const std::string raw = payload.substr(pos + key.size());
+    std::string decoded;
+    decoded.reserve(raw.size());
+    for (std::size_t i = 0; i < raw.size(); ++i) {
+        if (raw[i] == '%' && i + 2 < raw.size()) {
+            const std::string hex = raw.substr(i + 1, 2);
+            char* endPtr = nullptr;
+            const long value = std::strtol(hex.c_str(), &endPtr, 16);
+            if (endPtr != nullptr && *endPtr == '\0') {
+                decoded.push_back(static_cast<char>(value));
+                i += 2;
+                continue;
+            }
+        } else if (raw[i] == '+') {
+            decoded.push_back(' ');
+            continue;
+        }
+        decoded.push_back(raw[i]);
+    }
+    return decoded;
+}
+
+std::string WebServer::buildCodeStatsJson(const backend::CodeStatsResult& result,
+                                          const std::string& directory) const {
+    std::ostringstream oss;
+    oss << R"({"success":true,)"
+        << R"("directory":")" << directory << R"(",)"
+        << R"("totalLines":)" << result.totalLines << ",";
+
+    oss << R"("languages":[)";
+    std::size_t index = 0;
+    for (const auto& [lang, summary] : result.languageSummaries) {
+        oss << R"({"language":")" << lang << R"(",)"
+            << R"("files":)" << summary.fileCount << ","
+            << R"("lines":)" << summary.lineCount << "}";
+        if (++index < result.languageSummaries.size()) {
+            oss << ",";
+        }
+    }
+    oss << "],";
+
+    const auto& pySummary = result.pythonFunctions;
+    oss << R"("pythonFunctions":{)"
+        << R"("count":)" << pySummary.functionCount << ","
+        << R"("averageLength":)" << pySummary.averageLength << ","
+        << R"("minLength":)" << pySummary.minLength << ","
+        << R"("maxLength":)" << pySummary.maxLength << ","
+        << R"("medianLength":)" << pySummary.medianLength << "}}";
+    return oss.str();
 }
 
 }  // namespace frontend

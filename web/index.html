@@ -325,6 +325,228 @@
         color: #ffffff;
       }
 
+      .stats-panel {
+        position: fixed;
+        right: 24px;
+        bottom: 24px;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 0.75rem;
+        z-index: 120;
+      }
+
+      .stats-button {
+        padding: 0.85rem 1.3rem;
+        border-radius: 1.1rem;
+        border: none;
+        background: linear-gradient(135deg, #43cea2, #185a9d);
+        color: #f8f8f2;
+        font-size: 0.95rem;
+        font-weight: 600;
+        cursor: pointer;
+        box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+      }
+
+      .stats-button:hover,
+      .stats-button:focus {
+        transform: translateY(-4px);
+        box-shadow: 0 16px 32px rgba(0, 0, 0, 0.45);
+        outline: none;
+      }
+
+      .stats-dialog {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(14, 17, 22, 0.8);
+        backdrop-filter: blur(6px);
+        z-index: 150;
+      }
+
+      .stats-dialog[hidden] {
+        display: none;
+      }
+
+      .stats-dialog-card {
+        width: min(720px, 92vw);
+        max-height: 90vh;
+        padding: 1.75rem;
+        border-radius: 1.5rem;
+        background: rgba(29, 33, 44, 0.96);
+        box-shadow: 0 18px 45px rgba(0, 0, 0, 0.5);
+        display: flex;
+        flex-direction: column;
+        gap: 1.2rem;
+        color: #f8f8f2;
+      }
+
+      .stats-dialog-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+      }
+
+      .stats-dialog-header h3 {
+        margin: 0;
+      }
+
+      .stats-close {
+        border: none;
+        background: transparent;
+        color: rgba(248, 248, 242, 0.7);
+        font-size: 1.5rem;
+        cursor: pointer;
+        transition: color 0.2s ease;
+      }
+
+      .stats-close:hover,
+      .stats-close:focus {
+        color: #ffffff;
+      }
+
+      .stats-input-row {
+        display: flex;
+        gap: 0.75rem;
+      }
+
+      #stats-directory {
+        flex: 1;
+        padding: 0.65rem 0.85rem;
+        border-radius: 0.9rem;
+        border: none;
+        background: rgba(248, 248, 242, 0.1);
+        color: #f8f8f2;
+      }
+
+      #stats-directory:focus {
+        outline: 2px solid rgba(67, 206, 162, 0.6);
+        background: rgba(248, 248, 242, 0.15);
+      }
+
+      #stats-run {
+        padding: 0.65rem 1.2rem;
+        border-radius: 0.9rem;
+        border: none;
+        background: #43cea2;
+        color: #0e1116;
+        font-weight: 600;
+        cursor: pointer;
+        transition: transform 0.15s ease, background 0.2s ease;
+      }
+
+      #stats-run:hover,
+      #stats-run:focus {
+        transform: translateY(-2px);
+        background: #6be0bc;
+      }
+
+      .stats-results {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1.5rem;
+        align-items: flex-start;
+      }
+
+      .stats-card {
+        background: rgba(255, 255, 255, 0.08);
+        border-radius: 1rem;
+        padding: 1rem;
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+      }
+
+      .stats-card h4 {
+        margin: 0 0 0.75rem;
+        font-size: 1.05rem;
+      }
+
+      .bar-chart {
+        display: flex;
+        flex-direction: column;
+        gap: 0.7rem;
+      }
+
+      .bar-row {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+      }
+
+      .bar-label {
+        width: 70px;
+        font-size: 0.85rem;
+        text-align: right;
+        color: rgba(248, 248, 242, 0.8);
+      }
+
+      .bar-track {
+        flex: 1;
+        height: 12px;
+        background: rgba(248, 248, 242, 0.1);
+        border-radius: 999px;
+        overflow: hidden;
+      }
+
+      .bar-fill {
+        height: 100%;
+        border-radius: 999px;
+        background: linear-gradient(90deg, #ff9966, #ff5e62);
+      }
+
+      .pie-chart {
+        width: 180px;
+        height: 180px;
+        margin: 0 auto;
+        border-radius: 50%;
+        background: rgba(248, 248, 242, 0.1);
+        position: relative;
+      }
+
+      .pie-chart::after {
+        content: "";
+        position: absolute;
+        inset: 20%;
+        border-radius: 50%;
+        background: rgba(29, 33, 44, 0.96);
+      }
+
+      .pie-legend {
+        margin-top: 1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+      }
+
+      .pie-legend-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.9rem;
+        color: rgba(248, 248, 242, 0.85);
+      }
+
+      .pie-color {
+        width: 12px;
+        height: 12px;
+        border-radius: 999px;
+      }
+
+      .stats-summary {
+        display: grid;
+        gap: 0.5rem;
+        font-size: 0.95rem;
+      }
+
+      .stats-message {
+        min-height: 1.2rem;
+        font-size: 0.9rem;
+        color: rgba(248, 248, 242, 0.75);
+      }
+
       button {
         background: #596275;
         color: #f8f8f2;
@@ -581,6 +803,37 @@
         <p id="duck-response" class="duck-response"></p>
       </div>
     </div>
+    <div class="stats-panel">
+      <button id="stats-button" class="stats-button">统计代码量</button>
+    </div>
+    <div id="stats-dialog" class="stats-dialog" hidden>
+      <div class="stats-dialog-card">
+        <div class="stats-dialog-header">
+          <h3>代码统计</h3>
+          <button id="stats-close" class="stats-close" aria-label="关闭">×</button>
+        </div>
+        <div class="stats-input-row">
+          <input id="stats-directory" type="text" placeholder="输入要统计的目录，默认当前目录" />
+          <button id="stats-run">开始统计</button>
+        </div>
+        <div id="stats-message" class="stats-message"></div>
+        <div id="stats-results" class="stats-results" hidden>
+          <div class="stats-card">
+            <h4>代码量分布</h4>
+            <div id="stats-bar-chart" class="bar-chart"></div>
+          </div>
+          <div class="stats-card">
+            <h4>语言占比</h4>
+            <div id="stats-pie-chart" class="pie-chart"></div>
+            <div id="stats-pie-legend" class="pie-legend"></div>
+          </div>
+          <div class="stats-card">
+            <h4>Python 函数长度</h4>
+            <div id="stats-python-summary" class="stats-summary"></div>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <script>
       const timeLeftEl = document.getElementById("time-left");
@@ -602,6 +855,17 @@
       const duckInput = document.getElementById("duck-input");
       const duckSend = document.getElementById("duck-send");
       const duckResponse = document.getElementById("duck-response");
+      const statsButton = document.getElementById("stats-button");
+      const statsDialog = document.getElementById("stats-dialog");
+      const statsClose = document.getElementById("stats-close");
+      const statsDirectory = document.getElementById("stats-directory");
+      const statsRun = document.getElementById("stats-run");
+      const statsMessage = document.getElementById("stats-message");
+      const statsResults = document.getElementById("stats-results");
+      const statsBarChart = document.getElementById("stats-bar-chart");
+      const statsPieChart = document.getElementById("stats-pie-chart");
+      const statsPieLegend = document.getElementById("stats-pie-legend");
+      const statsPythonSummary = document.getElementById("stats-python-summary");
 
       const directionButtons = {
         up: document.getElementById("btn-up"),
@@ -679,8 +943,27 @@
         }
       });
       document.addEventListener("keydown", (event) => {
-        if (event.key === "Escape" && !duckDialog.hidden) {
-          closeDuckDialog();
+        if (event.key === "Escape") {
+          if (!duckDialog.hidden) {
+            closeDuckDialog();
+          }
+          if (!statsDialog.hidden) {
+            closeStatsDialog();
+          }
+        }
+      });
+      statsButton.addEventListener("click", openStatsDialog);
+      statsClose.addEventListener("click", closeStatsDialog);
+      statsDialog.addEventListener("click", (event) => {
+        if (event.target === statsDialog) {
+          closeStatsDialog();
+        }
+      });
+      statsRun.addEventListener("click", runStats);
+      statsDirectory.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          runStats();
         }
       });
 
@@ -813,6 +1096,121 @@
         } else {
           duckResponse.textContent = "恭喜你触发隐藏菜单";
         }
+      }
+
+      function openStatsDialog() {
+        statsDialog.hidden = false;
+        statsDirectory.value = statsDirectory.value || ".";
+        statsMessage.textContent = "";
+        statsResults.hidden = true;
+        statsBarChart.innerHTML = "";
+        statsPieChart.style.background = "rgba(248, 248, 242, 0.1)";
+        statsPieLegend.innerHTML = "";
+        statsPythonSummary.innerHTML = "";
+        setTimeout(() => statsDirectory.focus(), 0);
+      }
+
+      function closeStatsDialog() {
+        statsDialog.hidden = true;
+      }
+
+      async function runStats() {
+        const directory = (statsDirectory.value || ".").trim();
+        statsMessage.textContent = "统计中...";
+        statsResults.hidden = true;
+        try {
+          const response = await fetch("/codestats", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: `directory=${encodeURIComponent(directory)}`,
+          });
+          const data = await response.json();
+          if (!response.ok || data.success === false) {
+            throw new Error(data.error || "统计失败");
+          }
+          renderStats(data);
+          statsMessage.textContent = `目录 ${data.directory} 的统计已完成，总计 ${data.totalLines} 行。`;
+        } catch (error) {
+          statsMessage.textContent = error && error.message ? `统计失败：${error.message}` : "统计失败，请检查目录路径是否正确。";
+          console.error(error);
+        }
+      }
+
+      function renderStats(data) {
+        statsResults.hidden = false;
+        const colors = ["#ff9a9e", "#fad0c4", "#a1c4fd", "#c2e9fb", "#fbc2eb", "#8fd3f4"];
+
+        statsBarChart.innerHTML = "";
+        const languages = data.languages || [];
+        const maxLines = Math.max(1, ...languages.map((item) => item.lines));
+
+        languages.forEach((item, index) => {
+          const barRow = document.createElement("div");
+          barRow.classList.add("bar-row");
+
+          const label = document.createElement("div");
+          label.classList.add("bar-label");
+          label.textContent = item.language;
+
+          const track = document.createElement("div");
+          track.classList.add("bar-track");
+
+          const fill = document.createElement("div");
+          fill.classList.add("bar-fill");
+          fill.style.width = `${(item.lines / maxLines) * 100}%`;
+          fill.style.background = `linear-gradient(90deg, ${colors[index % colors.length]}, ${colors[(index + 1) % colors.length]})`;
+
+          const value = document.createElement("span");
+          value.textContent = `${item.lines} 行`;
+          value.style.fontSize = "0.85rem";
+          value.style.color = "rgba(248, 248, 242, 0.75)";
+          value.style.minWidth = "70px";
+          value.style.textAlign = "left";
+
+          track.appendChild(fill);
+          barRow.append(label, track, value);
+          statsBarChart.append(barRow);
+        });
+
+        const totalLines = data.totalLines || 1;
+        let start = 0;
+        const pieSegments = languages
+          .map((item, index) => {
+            const percentage = totalLines === 0 ? 0 : (item.lines / totalLines) * 100;
+            const segment = `${colors[index % colors.length]} ${start}% ${start + percentage}%`;
+            start += percentage;
+            return segment;
+          })
+          .join(", ");
+        statsPieChart.style.background = pieSegments
+          ? `conic-gradient(${pieSegments})`
+          : "rgba(248, 248, 242, 0.1)";
+
+        statsPieLegend.innerHTML = "";
+        languages.forEach((item, index) => {
+          const legendItem = document.createElement("div");
+          legendItem.classList.add("pie-legend-item");
+
+          const colorBox = document.createElement("div");
+          colorBox.classList.add("pie-color");
+          colorBox.style.background = colors[index % colors.length];
+
+          const text = document.createElement("span");
+          const percent = totalLines === 0 ? 0 : ((item.lines / totalLines) * 100).toFixed(1);
+          text.textContent = `${item.language}: ${item.lines} 行 (${percent}%)`;
+
+          legendItem.append(colorBox, text);
+          statsPieLegend.appendChild(legendItem);
+        });
+
+        const py = data.pythonFunctions || {};
+        statsPythonSummary.innerHTML = `
+          <div>函数数量：${py.count || 0}</div>
+          <div>平均长度：${(py.averageLength || 0).toFixed(2)} 行</div>
+          <div>最短函数：${py.minLength || 0} 行</div>
+          <div>最长函数：${py.maxLength || 0} 行</div>
+          <div>中位数：${(py.medianLength || 0).toFixed(2)} 行</div>
+        `;
       }
 
       async function triggerRain() {

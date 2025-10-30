@@ -47,3 +47,7 @@
 [2025-10-23 17:53:29] Simplified envelope rendering to display numeric value only.
 [2025-10-23 18:01:17] Updated README to mirror latest features and modification log milestones.
 [2025-10-23 18:02:14] Fixed /pause routing to use backend handler and avoid 404.
+[2025-10-30 17:17:16] Added code statistics analyzer and frontend visualization tools.
+[2025-10-30 17:21:51] Restricted code statistics to workspace subdirectories and updated README.
+[2025-10-30 17:27:23] Forced code stats to resolve paths relative to workspace.
+[2025-10-30 17:38:47] Simplified code stats path resolution by always joining relative path to workspace.
