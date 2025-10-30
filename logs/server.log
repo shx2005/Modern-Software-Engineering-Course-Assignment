@@ -1,125 +1,122 @@
-2025-10-30 17:39:15 | Initializing tank red envelope game.
-2025-10-30 17:39:15 | Engine seeded with value 96067662.
-2025-10-30 17:39:15 | Resolved HTTP port 8080.
-2025-10-30 17:39:15 | Starting web server event loop.
-2025-10-30 17:39:15 | Web server listening on port 8080.
-2025-10-30 17:39:25 | Request: GET /state
-2025-10-30 17:39:25 | Request: GET /state
-2025-10-30 17:39:25 | Request: GET /state
-2025-10-30 17:39:26 | Request: GET /
-2025-10-30 17:39:26 | Request: GET /static/duck.png
-2025-10-30 17:39:27 | Request: POST /reset
-2025-10-30 17:39:27 | Reset request completed and engine reseeded.
-2025-10-30 17:39:27 | Request: GET /state
-2025-10-30 17:39:27 | Request: GET /state
-2025-10-30 17:39:28 | Request: POST /move
-2025-10-30 17:39:28 | Move request, body='direction=down', moved=true, timeUp=false.
-2025-10-30 17:39:28 | Request: GET /state
-2025-10-30 17:39:28 | Request: GET /state
-2025-10-30 17:39:28 | Request: POST /move
-2025-10-30 17:39:28 | Move request, body='direction=down', moved=true, timeUp=false.
-2025-10-30 17:39:28 | Request: GET /state
-2025-10-30 17:39:28 | Request: POST /move
-2025-10-30 17:39:28 | Move request, body='direction=down', moved=true, timeUp=false.
-2025-10-30 17:39:28 | Request: GET /state
-2025-10-30 17:39:28 | Request: POST /move
-2025-10-30 17:39:28 | Move request, body='direction=down', moved=true, timeUp=false.
-2025-10-30 17:39:28 | Request: GET /state
-2025-10-30 17:39:28 | Request: GET /state
-2025-10-30 17:39:28 | Request: POST /move
-2025-10-30 17:39:28 | Move request, body='direction=down', moved=true, timeUp=false.
-2025-10-30 17:39:29 | Request: GET /state
-2025-10-30 17:39:29 | Request: POST /move
-2025-10-30 17:39:29 | Move request, body='direction=right', moved=true, timeUp=false.
-2025-10-30 17:39:29 | Request: GET /state
-2025-10-30 17:39:29 | Request: GET /state
-2025-10-30 17:39:29 | Request: POST /move
-2025-10-30 17:39:29 | Move request, body='direction=up', moved=true, timeUp=false.
-2025-10-30 17:39:29 | Request: GET /state
-2025-10-30 17:39:29 | Request: GET /state
-2025-10-30 17:39:30 | Request: GET /state
-2025-10-30 17:39:30 | Request: GET /state
-2025-10-30 17:39:31 | Request: GET /state
-2025-10-30 17:39:31 | Request: GET /state
-2025-10-30 17:39:32 | Request: GET /state
-2025-10-30 17:39:32 | Request: GET /state
-2025-10-30 17:39:33 | Request: GET /state
-2025-10-30 17:39:34 | Request: GET /state
-2025-10-30 17:39:35 | Request: GET /state
-2025-10-30 17:39:36 | Request: GET /state
-2025-10-30 17:39:37 | Request: GET /state
-2025-10-30 17:39:38 | Request: GET /state
-2025-10-30 17:39:39 | Request: GET /state
-2025-10-30 17:39:40 | Request: GET /state
-2025-10-30 17:39:41 | Request: GET /state
-2025-10-30 17:39:42 | Request: GET /state
-2025-10-30 17:39:43 | Request: GET /state
-2025-10-30 17:39:44 | Request: GET /state
-2025-10-30 17:39:45 | Request: GET /state
-2025-10-30 17:39:45 | Request: GET /state
-2025-10-30 17:39:46 | Request: GET /state
-2025-10-30 17:39:46 | Request: GET /state
-2025-10-30 17:39:47 | Request: GET /state
-2025-10-30 17:39:47 | Request: GET /state
-2025-10-30 17:39:48 | Request: GET /state
-2025-10-30 17:39:48 | Request: GET /state
-2025-10-30 17:39:49 | Request: GET /state
-2025-10-30 17:39:49 | Request: POST /codestats
-2025-10-30 17:39:49 | Code stats computed for directory '.'.
-2025-10-30 17:39:49 | Request: GET /state
-2025-10-30 17:39:50 | Request: GET /state
-2025-10-30 17:39:50 | Request: GET /state
-2025-10-30 17:39:51 | Request: GET /state
-2025-10-30 17:39:51 | Request: GET /state
-2025-10-30 17:39:52 | Request: GET /state
-2025-10-30 17:39:52 | Request: GET /state
-2025-10-30 17:39:53 | Request: GET /state
-2025-10-30 17:39:53 | Request: GET /state
-2025-10-30 17:39:54 | Request: GET /state
-2025-10-30 17:39:54 | Request: GET /state
-2025-10-30 17:39:55 | Request: GET /state
-2025-10-30 17:39:55 | Request: GET /state
-2025-10-30 17:39:56 | Request: GET /state
-2025-10-30 17:39:57 | Request: GET /state
-2025-10-30 17:39:58 | Request: GET /state
-2025-10-30 17:39:59 | Request: GET /state
-2025-10-30 17:40:00 | Request: GET /state
-2025-10-30 17:40:01 | Request: GET /state
-2025-10-30 17:40:02 | Request: GET /state
-2025-10-30 17:40:02 | Request: GET /state
-2025-10-30 17:40:03 | Request: GET /state
-2025-10-30 17:40:03 | Request: GET /state
-2025-10-30 17:40:04 | Request: GET /state
-2025-10-30 17:40:04 | Request: GET /state
-2025-10-30 17:40:05 | Request: GET /state
-2025-10-30 17:40:05 | Request: GET /state
-2025-10-30 17:40:06 | Request: GET /state
-2025-10-30 17:40:06 | Request: GET /state
-2025-10-30 17:40:07 | Request: GET /state
-2025-10-30 17:40:07 | Request: GET /state
-2025-10-30 17:40:08 | Request: GET /state
-2025-10-30 17:40:08 | Request: GET /state
-2025-10-30 17:40:09 | Request: GET /state
-2025-10-30 17:40:09 | Request: GET /state
-2025-10-30 17:40:10 | Request: GET /state
-2025-10-30 17:40:10 | Request: GET /state
-2025-10-30 17:40:11 | Request: GET /state
-2025-10-30 17:40:12 | Request: GET /state
-2025-10-30 17:40:13 | Request: GET /state
-2025-10-30 17:40:14 | Request: GET /state
-2025-10-30 17:40:15 | Request: GET /state
-2025-10-30 17:40:16 | Request: GET /state
-2025-10-30 17:40:17 | Request: GET /state
-2025-10-30 17:40:18 | Request: GET /state
-2025-10-30 17:40:19 | Request: GET /state
-2025-10-30 17:40:20 | Request: GET /state
-2025-10-30 17:40:21 | Request: GET /state
-2025-10-30 17:40:22 | Request: GET /state
-2025-10-30 17:40:23 | Request: GET /state
-2025-10-30 17:40:24 | Request: GET /state
-2025-10-30 17:40:25 | Request: GET /state
-2025-10-30 17:40:26 | Request: GET /state
-2025-10-30 17:40:27 | Request: GET /state
-2025-10-30 17:40:28 | Request: GET /state
-2025-10-30 17:40:29 | Request: GET /state
-2025-10-30 17:40:30 | Request: GET /state
+2025-10-30 18:03:29 | Initializing tank red envelope game.
+2025-10-30 18:03:29 | Engine seeded with value 1549538377.
+2025-10-30 18:03:29 | Resolved HTTP port 8080.
+2025-10-30 18:03:29 | Starting web server event loop.
+2025-10-30 18:03:29 | Web server listening on port 8080.
+2025-10-30 18:03:29 | Request: GET /state
+2025-10-30 18:03:29 | Request: GET /state
+2025-10-30 18:03:30 | Request: GET /state
+2025-10-30 18:03:30 | Request: GET /state
+2025-10-30 18:03:30 | Request: GET /static/duck2.jpg
+2025-10-30 18:03:31 | Request: GET /state
+2025-10-30 18:03:31 | Request: GET /state
+2025-10-30 18:03:32 | Request: GET /state
+2025-10-30 18:03:32 | Request: GET /state
+2025-10-30 18:03:32 | Request: POST /move
+2025-10-30 18:03:32 | Move request, body='direction=left', moved=true, timeUp=false.
+2025-10-30 18:03:32 | Request: GET /state
+2025-10-30 18:03:33 | Request: GET /state
+2025-10-30 18:03:33 | Request: POST /move
+2025-10-30 18:03:33 | Move request, body='direction=down', moved=true, timeUp=false.
+2025-10-30 18:03:33 | Request: GET /state
+2025-10-30 18:03:33 | Request: GET /state
+2025-10-30 18:03:33 | Request: POST /move
+2025-10-30 18:03:33 | Move request, body='direction=left', moved=true, timeUp=false.
+2025-10-30 18:03:33 | Request: GET /state
+2025-10-30 18:03:34 | Request: POST /move
+2025-10-30 18:03:34 | Move request, body='direction=down', moved=true, timeUp=false.
+2025-10-30 18:03:34 | Request: GET /state
+2025-10-30 18:03:34 | Request: GET /state
+2025-10-30 18:03:34 | Request: POST /codestats
+2025-10-30 18:03:34 | Request: GET /state
+2025-10-30 18:03:35 | Request: GET /state
+2025-10-30 18:03:35 | Code stats computed for directory 'testcase'.
+2025-10-30 18:03:35 | Request: GET /state
+2025-10-30 18:03:36 | Request: GET /state
+2025-10-30 18:03:36 | Request: GET /state
+2025-10-30 18:03:37 | Request: GET /state
+2025-10-30 18:03:37 | Request: GET /state
+2025-10-30 18:03:38 | Request: GET /state
+2025-10-30 18:03:38 | Request: GET /state
+2025-10-30 18:03:39 | Request: GET /state
+2025-10-30 18:03:39 | Request: GET /state
+2025-10-30 18:03:40 | Request: GET /state
+2025-10-30 18:03:40 | Request: GET /state
+2025-10-30 18:03:41 | Request: GET /state
+2025-10-30 18:03:41 | Request: GET /state
+2025-10-30 18:03:42 | Request: GET /state
+2025-10-30 18:03:42 | Request: GET /state
+2025-10-30 18:03:43 | Request: GET /state
+2025-10-30 18:03:43 | Request: GET /state
+2025-10-30 18:03:44 | Request: GET /state
+2025-10-30 18:03:44 | Request: GET /state
+2025-10-30 18:03:45 | Request: GET /state
+2025-10-30 18:03:45 | Request: GET /state
+2025-10-30 18:03:46 | Request: GET /state
+2025-10-30 18:03:46 | Request: GET /state
+2025-10-30 18:03:47 | Request: GET /state
+2025-10-30 18:03:47 | Request: GET /state
+2025-10-30 18:03:48 | Request: GET /state
+2025-10-30 18:03:48 | Request: GET /state
+2025-10-30 18:03:49 | Request: GET /state
+2025-10-30 18:03:49 | Request: GET /state
+2025-10-30 18:03:50 | Request: GET /state
+2025-10-30 18:03:51 | Request: GET /state
+2025-10-30 18:03:52 | Request: GET /state
+2025-10-30 18:03:53 | Request: GET /state
+2025-10-30 18:03:54 | Request: GET /state
+2025-10-30 18:03:54 | Request: GET /state
+2025-10-30 18:03:54 | Request: GET /state
+2025-10-30 18:03:55 | Request: GET /state
+2025-10-30 18:03:55 | Request: GET /state
+2025-10-30 18:03:56 | Request: GET /state
+2025-10-30 18:03:56 | Request: GET /state
+2025-10-30 18:03:57 | Request: GET /state
+2025-10-30 18:03:57 | Request: GET /state
+2025-10-30 18:03:58 | Request: GET /state
+2025-10-30 18:03:58 | Request: GET /state
+2025-10-30 18:03:59 | Request: GET /state
+2025-10-30 18:03:59 | Request: GET /state
+2025-10-30 18:04:00 | Request: GET /state
+2025-10-30 18:04:01 | Request: GET /state
+2025-10-30 18:04:02 | Request: GET /state
+2025-10-30 18:04:03 | Request: GET /state
+2025-10-30 18:04:04 | Request: GET /state
+2025-10-30 18:04:05 | Request: GET /state
+2025-10-30 18:04:06 | Request: GET /state
+2025-10-30 18:04:07 | Request: GET /state
+2025-10-30 18:04:08 | Request: GET /state
+2025-10-30 18:04:09 | Request: GET /state
+2025-10-30 18:04:10 | Request: GET /state
+2025-10-30 18:04:11 | Request: GET /state
+2025-10-30 18:04:12 | Request: GET /state
+2025-10-30 18:04:13 | Request: GET /state
+2025-10-30 18:04:14 | Request: GET /state
+2025-10-30 18:04:15 | Request: GET /state
+2025-10-30 18:04:16 | Request: GET /state
+2025-10-30 18:04:17 | Request: GET /state
+2025-10-30 18:04:18 | Request: GET /state
+2025-10-30 18:04:19 | Request: GET /state
+2025-10-30 18:04:20 | Request: GET /state
+2025-10-30 18:04:20 | Request: GET /state
+2025-10-30 18:04:21 | Request: GET /state
+2025-10-30 18:04:21 | Request: GET /state
+2025-10-30 18:04:22 | Request: GET /state
+2025-10-30 18:04:23 | Request: GET /state
+2025-10-30 18:04:24 | Request: GET /state
+2025-10-30 18:04:25 | Request: GET /state
+2025-10-30 18:04:26 | Request: GET /state
+2025-10-30 18:04:27 | Request: GET /state
+2025-10-30 18:04:28 | Request: GET /state
+2025-10-30 18:04:29 | Request: GET /state
+2025-10-30 18:04:30 | Request: GET /state
+2025-10-30 18:04:31 | Request: GET /state
+2025-10-30 18:04:31 | Request: GET /state
+2025-10-30 18:04:32 | Request: GET /state
+2025-10-30 18:04:32 | Request: GET /state
+2025-10-30 18:04:33 | Request: GET /state
+2025-10-30 18:04:33 | Request: GET /state
+2025-10-30 18:04:34 | Request: GET /state
+2025-10-30 18:04:34 | Request: GET /state
+2025-10-30 18:04:35 | Request: GET /state
+2025-10-30 18:04:36 | Request: GET /state
