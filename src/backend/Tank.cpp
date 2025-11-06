@@ -9,7 +9,15 @@
 namespace backend {
 
 Tank::Tank(Position startPosition, int moveStep)
-    : m_position(startPosition), m_moveStep(std::max(1, moveStep)) {}
+    : m_position(startPosition),
+      m_moveStep(std::max(1, moveStep)),
+      m_exactX(static_cast<double>(startPosition.x)),
+      m_exactY(static_cast<double>(startPosition.y)) {
+    const double base = static_cast<double>(m_moveStep);
+    m_momentumIncrement = base * 0.45;
+    m_momentumDecay = base * 0.6;
+    m_momentumMax = base * 3.5;
+}
 
 Position Tank::getPosition() const noexcept {
     return m_position;
@@ -21,37 +29,79 @@ int Tank::getMoveStep() const noexcept {
 
 bool Tank::move(MoveDirection direction, int worldWidth, int worldHeight) noexcept {
     if (direction == MoveDirection::None) {
+        m_currentMomentum = 0.0;
+        m_lastDirection = MoveDirection::None;
         return false;
     }
 
-    Position updated = m_position;
+    if (m_lastDirection == direction) {
+        m_currentMomentum = std::min(m_currentMomentum + m_momentumIncrement, m_momentumMax);
+    } else if (m_currentMomentum > 0.0) {
+        m_currentMomentum = std::max(0.0, m_currentMomentum - m_momentumDecay);
+    }
+    const double delta = static_cast<double>(m_moveStep) + m_currentMomentum;
+
+    double nextX = m_exactX;
+    double nextY = m_exactY;
     switch (direction) {
         case MoveDirection::Up:
-            updated.y -= m_moveStep;
+            nextY -= delta;
             break;
         case MoveDirection::Down:
-            updated.y += m_moveStep;
+            nextY += delta;
             break;
         case MoveDirection::Left:
-            updated.x -= m_moveStep;
+            nextX -= delta;
             break;
         case MoveDirection::Right:
-            updated.x += m_moveStep;
+            nextX += delta;
             break;
         case MoveDirection::None:
             break;
     }
 
-    if (updated.x < 0 || updated.x >= worldWidth || updated.y < 0 || updated.y >= worldHeight) {
-        return false;
+    const double minX = 0.0;
+    const double minY = 0.0;
+    const double maxX = std::max(0, worldWidth - 1);
+    const double maxY = std::max(0, worldHeight - 1);
+
+    bool clamped = false;
+    if (nextX < minX) {
+        nextX = minX;
+        clamped = true;
+    } else if (nextX > maxX) {
+        nextX = maxX;
+        clamped = true;
     }
 
-    m_position = updated;
-    return true;
+    if (nextY < minY) {
+        nextY = minY;
+        clamped = true;
+    } else if (nextY > maxY) {
+        nextY = maxY;
+        clamped = true;
+    }
+
+    if (clamped) {
+        m_currentMomentum = 0.0;
+    }
+
+    const Position previous = m_position;
+    m_exactX = nextX;
+    m_exactY = nextY;
+    m_position = {static_cast<int>(std::round(nextX)),
+                  static_cast<int>(std::round(nextY))};
+    m_lastDirection = direction;
+
+    return m_position.x != previous.x || m_position.y != previous.y;
 }
 
 void Tank::setPosition(Position newPosition) noexcept {
     m_position = newPosition;
+    m_exactX = static_cast<double>(newPosition.x);
+    m_exactY = static_cast<double>(newPosition.y);
+    m_currentMomentum = 0.0;
+    m_lastDirection = MoveDirection::None;
 }
 
 bool isColliding(const Tank& tank, const RedEnvelope& envelope) noexcept {

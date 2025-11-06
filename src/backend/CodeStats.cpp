@@ -8,6 +8,7 @@
 #include <fstream>
 #include <numeric>
 #include <string>
+#include <unordered_set>
 
 namespace backend {
 
@@ -46,10 +47,85 @@ bool isDirectoryExcluded(const std::filesystem::path& path) {
     return name == ".git" || name == "bin" || name == "logs" || name == "node_modules";
 }
 
+struct LineMetrics {
+    std::size_t logical{0};
+    std::size_t blank{0};
+    std::size_t comment{0};
+};
+
+LineMetrics computeLineMetrics(const std::filesystem::path& filePath,
+                               const std::string& language,
+                               bool includeBlank,
+                               bool includeComment) {
+    LineMetrics metrics;
+    std::ifstream stream(filePath);
+    if (!stream.is_open()) {
+        return metrics;
+    }
+
+    std::string line;
+    bool inBlockComment = false;
+    while (std::getline(stream, line)) {
+        const std::string trimmed = trim(line);
+        if (trimmed.empty()) {
+            if (includeBlank) {
+                metrics.blank += 1;
+            }
+            continue;
+        }
+
+        bool isCommentLine = false;
+        if (language == "Python") {
+            if (!trimmed.empty() && trimmed[0] == '#') {
+                isCommentLine = true;
+            }
+        } else {
+            if (inBlockComment) {
+                isCommentLine = true;
+                if (trimmed.find("*/") != std::string::npos) {
+                    inBlockComment = false;
+                }
+            } else {
+                if (trimmed.rfind("//", 0) == 0) {
+                    isCommentLine = true;
+                } else if (trimmed.rfind("/*", 0) == 0) {
+                    isCommentLine = true;
+                    if (trimmed.find("*/", 0) == std::string::npos) {
+                        inBlockComment = true;
+                    }
+                } else {
+                    const std::size_t blockPos = trimmed.find("/*");
+                    if (blockPos != std::string::npos &&
+                        trimmed.find("*/", blockPos + 2) == std::string::npos) {
+                        inBlockComment = true;
+                    }
+                }
+
+                if (!isCommentLine && trimmed.rfind("*", 0) == 0) {
+                    isCommentLine = true;
+                }
+            }
+        }
+
+        if (includeComment && isCommentLine) {
+            metrics.comment += 1;
+        }
+
+        if (!isCommentLine) {
+            metrics.logical += 1;
+        }
+    }
+
+    return metrics;
+}
+
 }  // namespace
 
-CodeStatsResult CodeStatsAnalyzer::analyze(const std::filesystem::path& root) {
+CodeStatsResult CodeStatsAnalyzer::analyze(const std::filesystem::path& root,
+                                           const CodeStatsOptions& options) {
     CodeStatsResult result;
+    result.includeBlankLines = options.includeBlankLines;
+    result.includeCommentLines = options.includeCommentLines;
 
     std::error_code ec;
     const std::filesystem::path workspace =
@@ -100,7 +176,7 @@ CodeStatsResult CodeStatsAnalyzer::analyze(const std::filesystem::path& root) {
                 it.disable_recursion_pending();
             }
         } else if (entry.is_regular_file()) {
-            visitFile(entry.path(), result);
+            visitFile(entry.path(), result, options);
         }
 
         ec.clear();
@@ -128,10 +204,19 @@ CodeStatsResult CodeStatsAnalyzer::analyze(const std::filesystem::path& root) {
         }
     }
 
+    if (!options.languages.empty()) {
+        for (const auto& language : options.languages) {
+            result.languageSummaries.try_emplace(language, LanguageSummary{});
+            result.includedLanguages.insert(language);
+        }
+    }
+
     return result;
 }
 
-void CodeStatsAnalyzer::visitFile(const std::filesystem::path& filePath, CodeStatsResult& result) {
+void CodeStatsAnalyzer::visitFile(const std::filesystem::path& filePath,
+                                  CodeStatsResult& result,
+                                  const CodeStatsOptions& options) {
     static const std::vector<std::string> javaExt{".java"};
     static const std::vector<std::string> cppExt{
         ".c",  ".C",  ".cc",  ".cpp", ".cxx", ".h",  ".hpp", ".hh", ".hxx"};
@@ -139,43 +224,44 @@ void CodeStatsAnalyzer::visitFile(const std::filesystem::path& filePath, CodeSta
 
     const std::string ext = filePath.extension().string();
     LanguageSummary* summary = nullptr;
+    std::string languageKey;
 
     if (hasExtension(filePath, javaExt)) {
-        summary = &result.languageSummaries["Java"];
+        languageKey = "Java";
     } else if (hasExtension(filePath, cppExt)) {
-        summary = &result.languageSummaries["C/C++"];
+        languageKey = "C/C++";
     } else if (hasExtension(filePath, pyExt)) {
-        summary = &result.languageSummaries["Python"];
+        languageKey = "Python";
     }
 
-    if (summary == nullptr) {
+    if (languageKey.empty()) {
         return;
     }
 
-    const std::size_t lineCount = countLogicalLines(filePath);
-    summary->fileCount += 1;
-    summary->lineCount += lineCount;
-    result.totalLines += lineCount;
+    if (!options.languages.empty() && options.languages.find(languageKey) == options.languages.end()) {
+        return;
+    }
+
+    result.includedLanguages.insert(languageKey);
+    LanguageSummary& languageSummary = result.languageSummaries[languageKey];
+
+    const LineMetrics metrics =
+        computeLineMetrics(filePath, languageKey, options.includeBlankLines, options.includeCommentLines);
+    languageSummary.fileCount += 1;
+    languageSummary.lineCount += metrics.logical;
+    result.totalLines += metrics.logical;
+    if (options.includeBlankLines) {
+        languageSummary.blankLineCount += metrics.blank;
+        result.totalBlankLines += metrics.blank;
+    }
+    if (options.includeCommentLines) {
+        languageSummary.commentLineCount += metrics.comment;
+        result.totalCommentLines += metrics.comment;
+    }
 
     if (ext == ".py") {
         analyzePythonFile(filePath, result);
     }
-}
-
-std::size_t CodeStatsAnalyzer::countLogicalLines(const std::filesystem::path& filePath) {
-    std::ifstream stream(filePath);
-    if (!stream.is_open()) {
-        return 0;
-    }
-
-    std::size_t count = 0;
-    std::string line;
-    while (std::getline(stream, line)) {
-        if (!trim(line).empty()) {
-            ++count;
-        }
-    }
-    return count;
 }
 
 void CodeStatsAnalyzer::analyzePythonFile(const std::filesystem::path& filePath,
@@ -196,6 +282,21 @@ void CodeStatsAnalyzer::analyzePythonFile(const std::filesystem::path& filePath,
         if (trimmedLine.rfind("def ", 0) == 0) {
             const int indent = leadingSpaces(lines[i]);
             int length = 1;
+            const std::size_t definitionLine = i + 1;
+            std::string functionName;
+            {
+                const std::size_t nameStart = trimmedLine.find(' ') + 1;
+                std::size_t nameEnd = trimmedLine.find('(', nameStart);
+                if (nameEnd == std::string::npos) {
+                    nameEnd = trimmedLine.find(':', nameStart);
+                }
+                if (nameEnd != std::string::npos && nameEnd > nameStart) {
+                    functionName = trimmedLine.substr(nameStart, nameEnd - nameStart);
+                } else {
+                    functionName = "unknown";
+                }
+            }
+
             for (std::size_t j = i + 1; j < lines.size(); ++j) {
                 const std::string trimmedBodyLine = trim(lines[j]);
                 const int bodyIndent = leadingSpaces(lines[j]);
@@ -208,6 +309,12 @@ void CodeStatsAnalyzer::analyzePythonFile(const std::filesystem::path& filePath,
             }
             if (length > 0) {
                 result.pythonFunctions.lengths.push_back(length);
+                PythonFunctionDetail detail{};
+                detail.name = functionName;
+                detail.filePath = filePath;
+                detail.lineNumber = definitionLine;
+                detail.length = length;
+                result.pythonFunctions.details.push_back(detail);
             }
         }
     }

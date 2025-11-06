@@ -22,6 +22,13 @@ public:
 private:
     Position m_position;
     int m_moveStep;
+    double m_exactX;
+    double m_exactY;
+    double m_currentMomentum{0.0};
+    double m_momentumIncrement{0.0};
+    double m_momentumDecay{0.0};
+    double m_momentumMax{0.0};
+    MoveDirection m_lastDirection{MoveDirection::None};
 };
 
 bool isColliding(const Tank& tank, const RedEnvelope& envelope) noexcept;

@@ -52,3 +52,4 @@
 [2025-10-30 17:27:23] Forced code stats to resolve paths relative to workspace.
 [2025-10-30 17:38:47] Simplified code stats path resolution by always joining relative path to workspace.
 [2025-10-30 17:58:24] Replaced code stats button with duck2 icon styling.
+[2025-10-30 18:07:53] Swapped tank grid marker to tank.jpg imagery.

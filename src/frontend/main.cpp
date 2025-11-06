@@ -4,6 +4,7 @@
 
 #include "backend/GameEngine.hpp"
 #include "backend/Logger.hpp"
+#include "frontend/LayoutManager.hpp"
 #include "frontend/WebServer.hpp"
 
 #include <chrono>
@@ -66,7 +67,9 @@ int main(int argc, char* argv[]) {
 
     const int port = resolvePort(argc, argv);
     backend::Logger::instance().log("Resolved HTTP port " + std::to_string(port) + ".");
-    frontend::WebServer server(engine, "web", port);
+    frontend::LayoutManager layoutManager;
+    layoutManager.initialize();
+    frontend::WebServer server(engine, layoutManager, "web", port);
 
     try {
         backend::Logger::instance().log("Starting web server event loop.");

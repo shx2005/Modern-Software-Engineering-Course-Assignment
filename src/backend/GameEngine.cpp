@@ -5,6 +5,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <iostream>
 #include <stdexcept>
 
 namespace backend {
@@ -74,6 +75,7 @@ GameEngine::GameEngine(GameConfig config)
 }
 
 void GameEngine::reset() {
+    std::cout << "GameEngine::reset start" << std::endl;
     m_stats = {};
     m_envelopes.clear();
     m_envelopes.reserve(static_cast<std::size_t>(m_config.initialEnvelopeCount));
@@ -84,11 +86,14 @@ void GameEngine::reset() {
     m_pauseStart = {};
 
     for (int i = 0; i < m_config.initialEnvelopeCount; ++i) {
+        std::cout << "Creating envelope " << i << std::endl;
         m_envelopes.emplace_back(createRandomEnvelope(m_nextEnvelopeId++));
     }
 
     m_startTime = std::chrono::steady_clock::now();
+    std::cout << "Before handleCollisions" << std::endl;
     handleCollisions();  // Ensure starting position collects envelopes if any overlap.
+    std::cout << "GameEngine::reset end" << std::endl;
 }
 
 bool GameEngine::moveTank(MoveDirection direction) {

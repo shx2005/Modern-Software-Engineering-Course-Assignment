@@ -5,6 +5,7 @@
 #include "frontend/WebServer.hpp"
 
 #include "backend/Logger.hpp"
+#include "frontend/LayoutManager.hpp"
 
 #include <arpa/inet.h>
 #include <netinet/in.h>
@@ -14,6 +15,7 @@
 #include <algorithm>
 #include <chrono>
 #include <cstdlib>
+#include <cctype>
 #include <cstring>
 #include <filesystem>
 #include <fstream>
@@ -23,6 +25,7 @@
 #include <stdexcept>
 #include <thread>
 #include <vector>
+#include <unordered_set>
 
 namespace frontend {
 
@@ -31,9 +34,11 @@ constexpr std::size_t kReadBufferSize = 4096;
 }
 
 WebServer::WebServer(backend::GameEngine& engine,
+                     LayoutManager& layoutManager,
                      std::string staticDir,
                      int port)
     : m_engine(engine),
+      m_layoutManager(layoutManager),
       m_staticDir(std::move(staticDir)),
       m_port(port) {}
 
@@ -197,6 +202,12 @@ void WebServer::handleClient(int clientSocket) {
             responseBody = handleApiRequest(method, path, body, contentType, statusCode);
         } else if (method == "POST" && path == "/codestats") {
             responseBody = handleApiRequest(method, path, body, contentType, statusCode);
+        } else if (method == "POST" && path == "/layout") {
+            responseBody = handleApiRequest(method, path, body, contentType, statusCode);
+        } else if (method == "POST" && path == "/print_longest_function") {
+            responseBody = handleApiRequest(method, path, body, contentType, statusCode);
+        } else if (method == "POST" && path == "/print_shortest_function") {
+            responseBody = handleApiRequest(method, path, body, contentType, statusCode);
         } else {
             sendNotFound(clientSocket);
             backend::Logger::instance().log("Responded 404 for path " + path + ".");
@@ -342,9 +353,12 @@ std::string WebServer::handleApiRequest(const std::string& method,
 
     if (method == "POST" && path == "/codestats") {
         const std::string directory = parseDirectory(body);
-        backend::CodeStatsAnalyzer analyzer;
         const std::string targetDir = directory.empty() ? "." : directory;
-        backend::CodeStatsResult stats = analyzer.analyze(targetDir);
+        backend::CodeStatsOptions options;
+        options.languages = parseLanguages(body);
+        options.includeBlankLines = parseBooleanFlag(body, "includeBlank");
+        options.includeCommentLines = parseBooleanFlag(body, "includeComments");
+        backend::CodeStatsResult stats = m_codeStatsFacade.analyzeAll(targetDir, options);
         contentType = "application/json";
         if (!stats.withinWorkspace) {
             backend::Logger::instance().log(
@@ -359,7 +373,45 @@ std::string WebServer::handleApiRequest(const std::string& method,
             return R"({"success":false,"error":"Directory does not exist."})";
         }
         backend::Logger::instance().log("Code stats computed for directory '" + targetDir + "'.");
-        return buildCodeStatsJson(stats, targetDir);
+        return buildCodeStatsJson(stats, targetDir, options);
+    }
+
+    if (method == "POST" && path == "/layout") {
+        backend::Logger::instance().log("Layout customization requested.");
+        contentType = "application/json";
+        statusCode = 202;
+        const std::string userId = "default";  // TODO: Extract from payload.
+        (void)body;
+        const std::string serialized = buildLayoutSettingsJson(userId);
+        return R"({"success":false,"message":"Layout manager not yet implemented","settings":")" +
+               serialized + R"("})";
+    }
+
+    if (method == "POST" && (path == "/print_longest_function" || path == "/print_shortest_function")) {
+        const std::string directory = parseDirectory(body);
+        const std::string targetDir = directory.empty() ? "." : directory;
+        backend::CodeStatsResult stats = m_codeStatsFacade.analyzeAll(targetDir);
+        contentType = "application/json";
+        if (!stats.withinWorkspace) {
+            backend::Logger::instance().log(
+                "Function print rejected for directory '" + targetDir + "' (outside workspace).");
+            statusCode = 403;
+            return R"({"success":false,"error":"目录必须位于工作空间内"})";
+        }
+        if (!stats.directoryExists) {
+            backend::Logger::instance().log(
+                "Function print failed: directory '" + targetDir + "' not found.");
+            statusCode = 404;
+            return R"({"success":false,"error":"目录不存在"})";
+        }
+        if (path == "/print_longest_function") {
+            backend::Logger::instance().log("Printing longest function for directory '" + targetDir + "'.");
+            m_codeStatsFacade.printLongestFunction(stats);
+            return R"({"success":true,"message":"最长函数信息已写入服务器日志"})";
+        }
+        backend::Logger::instance().log("Printing shortest function for directory '" + targetDir + "'.");
+        m_codeStatsFacade.printShortestFunction(stats);
+        return R"({"success":true,"message":"最短函数信息已写入服务器日志"})";
     }
 
     statusCode = 404;
@@ -484,43 +536,156 @@ std::string WebServer::parseDirectory(const std::string& payload) const {
     if (pos == std::string::npos) {
         return {};
     }
-    const std::string raw = payload.substr(pos + key.size());
+    std::size_t endPos = payload.find('&', pos + key.size());
+    std::string raw;
+    if (endPos == std::string::npos) {
+        raw = payload.substr(pos + key.size());
+    } else {
+        raw = payload.substr(pos + key.size(), endPos - (pos + key.size()));
+    }
+    return decodeFormValue(raw);
+}
+
+std::unordered_set<std::string> WebServer::parseLanguages(const std::string& payload) const {
+    const std::string key = "languages=";
+    const std::size_t pos = payload.find(key);
+    if (pos == std::string::npos) {
+        return {};
+    }
+    const std::size_t endPos = payload.find('&', pos + key.size());
+    const std::string raw =
+        endPos == std::string::npos ? payload.substr(pos + key.size())
+                                    : payload.substr(pos + key.size(), endPos - (pos + key.size()));
+    const std::string decoded = decodeFormValue(raw);
+
+    std::unordered_set<std::string> languages;
+    std::size_t start = 0;
+    while (start < decoded.size()) {
+        const std::size_t comma = decoded.find(',', start);
+        const std::string token = decoded.substr(
+            start, comma == std::string::npos ? std::string::npos : comma - start);
+        if (!token.empty()) {
+            std::string lowerToken;
+            lowerToken.reserve(token.size());
+            for (char ch : token) {
+                lowerToken.push_back(static_cast<char>(std::tolower(static_cast<unsigned char>(ch))));
+            }
+            if (lowerToken == "cpp" || lowerToken == "c++") {
+                languages.insert("C/C++");
+            } else if (lowerToken == "java") {
+                languages.insert("Java");
+            } else if (lowerToken == "python" || lowerToken == "py") {
+                languages.insert("Python");
+            }
+        }
+        if (comma == std::string::npos) {
+            break;
+        }
+        start = comma + 1;
+    }
+    return languages;
+}
+
+bool WebServer::parseBooleanFlag(const std::string& payload, const std::string& key) const {
+    const std::string prefix = key + "=";
+    const std::size_t pos = payload.find(prefix);
+    if (pos == std::string::npos) {
+        return false;
+    }
+    const std::size_t endPos = payload.find('&', pos + prefix.size());
+    const std::string raw =
+        endPos == std::string::npos ? payload.substr(pos + prefix.size())
+                                    : payload.substr(pos + prefix.size(), endPos - (pos + prefix.size()));
+    const std::string value = decodeFormValue(raw);
+    std::string lowerValue;
+    lowerValue.reserve(value.size());
+    for (char ch : value) {
+        lowerValue.push_back(static_cast<char>(std::tolower(static_cast<unsigned char>(ch))));
+    }
+    if (lowerValue == "1" || lowerValue == "true" || lowerValue == "on" || lowerValue == "yes") {
+        return true;
+    }
+    return false;
+}
+
+std::string WebServer::decodeFormValue(const std::string& value) const {
     std::string decoded;
-    decoded.reserve(raw.size());
-    for (std::size_t i = 0; i < raw.size(); ++i) {
-        if (raw[i] == '%' && i + 2 < raw.size()) {
-            const std::string hex = raw.substr(i + 1, 2);
+    decoded.reserve(value.size());
+    for (std::size_t i = 0; i < value.size(); ++i) {
+        if (value[i] == '%' && i + 2 < value.size()) {
+            const std::string hex = value.substr(i + 1, 2);
             char* endPtr = nullptr;
-            const long value = std::strtol(hex.c_str(), &endPtr, 16);
+            const long numeric = std::strtol(hex.c_str(), &endPtr, 16);
             if (endPtr != nullptr && *endPtr == '\0') {
-                decoded.push_back(static_cast<char>(value));
+                decoded.push_back(static_cast<char>(numeric));
                 i += 2;
                 continue;
             }
-        } else if (raw[i] == '+') {
+        } else if (value[i] == '+') {
             decoded.push_back(' ');
             continue;
         }
-        decoded.push_back(raw[i]);
+        decoded.push_back(value[i]);
     }
     return decoded;
 }
 
 std::string WebServer::buildCodeStatsJson(const backend::CodeStatsResult& result,
-                                          const std::string& directory) const {
+                                          const std::string& directory,
+                                          const backend::CodeStatsOptions& options) const {
     std::ostringstream oss;
     oss << R"({"success":true,)"
         << R"("directory":")" << directory << R"(",)"
-        << R"("totalLines":)" << result.totalLines << ",";
+        << R"("totalLines":)" << result.totalLines;
+    if (result.includeBlankLines) {
+        oss << R"(,"totalBlankLines":)" << result.totalBlankLines;
+    }
+    if (result.includeCommentLines) {
+        oss << R"(,"totalCommentLines":)" << result.totalCommentLines;
+    }
+    oss << R"(,"includeBlank":)" << (result.includeBlankLines ? "true" : "false")
+        << R"(,"includeComments":)" << (result.includeCommentLines ? "true" : "false") << ",";
 
     oss << R"("languages":[)";
-    std::size_t index = 0;
+    std::size_t emitted = 0;
     for (const auto& [lang, summary] : result.languageSummaries) {
+        if (emitted > 0) {
+            oss << ",";
+        }
         oss << R"({"language":")" << lang << R"(",)"
             << R"("files":)" << summary.fileCount << ","
-            << R"("lines":)" << summary.lineCount << "}";
-        if (++index < result.languageSummaries.size()) {
-            oss << ",";
+            << R"("lines":)" << summary.lineCount;
+        if (result.includeBlankLines) {
+            oss << R"(,"blankLines":)" << summary.blankLineCount;
+        }
+        if (result.includeCommentLines) {
+            oss << R"(,"commentLines":)" << summary.commentLineCount;
+        }
+        oss << "}";
+        ++emitted;
+    }
+    if (emitted == 0 && !options.languages.empty()) {
+        bool first = true;
+        for (const auto& lang : options.languages) {
+            const auto it = result.languageSummaries.find(lang);
+            backend::LanguageSummary summary{};
+            if (it != result.languageSummaries.end()) {
+                summary = it->second;
+            }
+            if (!first) {
+                oss << ",";
+            }
+            oss << R"({"language":")" << lang << R"(",)"
+                << R"("files":)" << summary.fileCount << ","
+                << R"("lines":)" << summary.lineCount;
+            if (result.includeBlankLines) {
+                oss << R"(,"blankLines":)" << summary.blankLineCount;
+            }
+            if (result.includeCommentLines) {
+                oss << R"(,"commentLines":)" << summary.commentLineCount;
+            }
+            oss << "}";
+            first = false;
         }
     }
     oss << "],";
@@ -533,6 +698,10 @@ std::string WebServer::buildCodeStatsJson(const backend::CodeStatsResult& result
         << R"("maxLength":)" << pySummary.maxLength << ","
         << R"("medianLength":)" << pySummary.medianLength << "}}";
     return oss.str();
+}
+
+std::string WebServer::buildLayoutSettingsJson(const std::string& userId) {
+    return m_layoutManager.exportPreferences(userId);
 }
 
 }  // namespace frontend

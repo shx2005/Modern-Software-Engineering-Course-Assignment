@@ -6,15 +6,20 @@
 
 #include "backend/GameEngine.hpp"
 #include "backend/CodeStats.hpp"
+#include "backend/CodeStatsFacade.hpp"
 
 #include <mutex>
 #include <string>
+#include <unordered_set>
 
 namespace frontend {
+
+class LayoutManager;
 
 class WebServer {
 public:
     WebServer(backend::GameEngine& engine,
+              LayoutManager& layoutManager,
               std::string staticDir,
               int port = 8080);
 
@@ -24,6 +29,8 @@ public:
 
 private:
     backend::GameEngine& m_engine;
+    LayoutManager& m_layoutManager;
+    backend::CodeStatsFacade m_codeStatsFacade;
     std::string m_staticDir;
     int m_port;
     std::mutex m_engineMutex;
@@ -47,7 +54,12 @@ private:
     std::string parseAction(const std::string& payload) const;
     std::string parseDirectory(const std::string& payload) const;
     std::string buildCodeStatsJson(const backend::CodeStatsResult& result,
-                                   const std::string& directory) const;
+                                   const std::string& directory,
+                                   const backend::CodeStatsOptions& options) const;
+    std::unordered_set<std::string> parseLanguages(const std::string& payload) const;
+    bool parseBooleanFlag(const std::string& payload, const std::string& key) const;
+    std::string decodeFormValue(const std::string& value) const;
+    std::string buildLayoutSettingsJson(const std::string& userId);
 };
 
 }  // namespace frontend
