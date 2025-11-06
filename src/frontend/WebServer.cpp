@@ -31,6 +31,48 @@ namespace frontend {
 
 namespace {
 constexpr std::size_t kReadBufferSize = 4096;
+
+std::string jsonEscape(const std::string& input) {
+    std::string output;
+    output.reserve(input.size());
+    for (char ch : input) {
+        switch (ch) {
+            case '\\':
+                output += "\\\\";
+                break;
+            case '"':
+                output += "\\\"";
+                break;
+            case '\b':
+                output += "\\b";
+                break;
+            case '\f':
+                output += "\\f";
+                break;
+            case '\n':
+                output += "\\n";
+                break;
+            case '\r':
+                output += "\\r";
+                break;
+            case '\t':
+                output += "\\t";
+                break;
+            default:
+                if (static_cast<unsigned char>(ch) < 0x20) {
+                    std::ostringstream oss;
+                    oss << "\\u"
+                        << std::hex << std::uppercase << std::setfill('0') << std::setw(4)
+                        << static_cast<int>(static_cast<unsigned char>(ch));
+                    output += oss.str();
+                } else {
+                    output += ch;
+                }
+                break;
+        }
+    }
+    return output;
+}
 }
 
 WebServer::WebServer(backend::GameEngine& engine,
@@ -47,30 +89,50 @@ int WebServer::port() const noexcept {
 }
 
 void WebServer::run() {
-    int serverSocket = ::socket(AF_INET, SOCK_STREAM, 0);
+    int serverSocket = -1;
+    int attempt = 0;
+    int currentPort = m_port;
+    constexpr int kMaxAttempts = 10;
+
+    while (attempt < kMaxAttempts) {
+        serverSocket = ::socket(AF_INET, SOCK_STREAM, 0);
+        if (serverSocket < 0) {
+            throw std::runtime_error("Failed to create server socket.");
+        }
+
+        int opt = 1;
+        if (setsockopt(serverSocket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
+            ::close(serverSocket);
+            throw std::runtime_error("Failed to set socket options.");
+        }
+
+        sockaddr_in address {};
+        address.sin_family = AF_INET;
+        address.sin_addr.s_addr = INADDR_ANY;
+        address.sin_port = htons(static_cast<uint16_t>(currentPort));
+
+        if (bind(serverSocket, reinterpret_cast<sockaddr*>(&address), sizeof(address)) == 0) {
+            if (listen(serverSocket, 10) < 0) {
+                ::close(serverSocket);
+                throw std::runtime_error("Failed to listen on server socket.");
+            }
+            if (currentPort != m_port) {
+                backend::Logger::instance().log("Requested port " + std::to_string(m_port) +
+                                                " unavailable; using fallback port " +
+                                                std::to_string(currentPort) + ".");
+            }
+            m_port = currentPort;
+            break;
+        }
+
+        ::close(serverSocket);
+        serverSocket = -1;
+        ++attempt;
+        ++currentPort;
+    }
+
     if (serverSocket < 0) {
-        throw std::runtime_error("Failed to create server socket.");
-    }
-
-    int opt = 1;
-    if (setsockopt(serverSocket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
-        ::close(serverSocket);
-        throw std::runtime_error("Failed to set socket options.");
-    }
-
-    sockaddr_in address {};
-    address.sin_family = AF_INET;
-    address.sin_addr.s_addr = INADDR_ANY;
-    address.sin_port = htons(static_cast<uint16_t>(m_port));
-
-    if (bind(serverSocket, reinterpret_cast<sockaddr*>(&address), sizeof(address)) < 0) {
-        ::close(serverSocket);
-        throw std::runtime_error("Failed to bind server socket.");
-    }
-
-    if (listen(serverSocket, 10) < 0) {
-        ::close(serverSocket);
-        throw std::runtime_error("Failed to listen on server socket.");
+        throw std::runtime_error("Failed to bind server socket after multiple attempts.");
     }
 
     backend::Logger::instance().log("Web server listening on port " + std::to_string(m_port) + ".");
@@ -390,7 +452,11 @@ std::string WebServer::handleApiRequest(const std::string& method,
     if (method == "POST" && (path == "/print_longest_function" || path == "/print_shortest_function")) {
         const std::string directory = parseDirectory(body);
         const std::string targetDir = directory.empty() ? "." : directory;
-        backend::CodeStatsResult stats = m_codeStatsFacade.analyzeAll(targetDir);
+        backend::CodeStatsOptions options;
+        options.languages = parseLanguages(body);
+        options.includeBlankLines = parseBooleanFlag(body, "includeBlank");
+        options.includeCommentLines = parseBooleanFlag(body, "includeComments");
+        backend::CodeStatsResult stats = m_codeStatsFacade.analyzeAll(targetDir, options);
         contentType = "application/json";
         if (!stats.withinWorkspace) {
             backend::Logger::instance().log(
@@ -405,13 +471,19 @@ std::string WebServer::handleApiRequest(const std::string& method,
             return R"({"success":false,"error":"目录不存在"})";
         }
         if (path == "/print_longest_function") {
-            backend::Logger::instance().log("Printing longest function for directory '" + targetDir + "'.");
-            m_codeStatsFacade.printLongestFunction(stats);
-            return R"({"success":true,"message":"最长函数信息已写入服务器日志"})";
+            const std::string summary = m_codeStatsFacade.printLongestFunction(stats);
+            if (summary.empty()) {
+                return R"({"success":false,"message":"未检测到 Python 函数，无法打印最长函数"})";
+            }
+            backend::Logger::instance().log("Longest function summary delivered for directory '" + targetDir + "'.");
+            return std::string(R"({"success":true,"message":")") + jsonEscape(summary) + "\"}";
         }
-        backend::Logger::instance().log("Printing shortest function for directory '" + targetDir + "'.");
-        m_codeStatsFacade.printShortestFunction(stats);
-        return R"({"success":true,"message":"最短函数信息已写入服务器日志"})";
+        const std::string summary = m_codeStatsFacade.printShortestFunction(stats);
+        if (summary.empty()) {
+            return R"({"success":false,"message":"未检测到 Python 函数，无法打印最短函数"})";
+        }
+        backend::Logger::instance().log("Shortest function summary delivered for directory '" + targetDir + "'.");
+        return std::string(R"({"success":true,"message":")") + jsonEscape(summary) + "\"}";
     }
 
     statusCode = 404;
@@ -633,9 +705,11 @@ std::string WebServer::decodeFormValue(const std::string& value) const {
 std::string WebServer::buildCodeStatsJson(const backend::CodeStatsResult& result,
                                           const std::string& directory,
                                           const backend::CodeStatsOptions& options) const {
+    std::vector<std::string> included(result.includedLanguages.begin(), result.includedLanguages.end());
+    std::sort(included.begin(), included.end());
     std::ostringstream oss;
     oss << R"({"success":true,)"
-        << R"("directory":")" << directory << R"(",)"
+        << R"("directory":")" << jsonEscape(directory) << R"(",)"
         << R"("totalLines":)" << result.totalLines;
     if (result.includeBlankLines) {
         oss << R"(,"totalBlankLines":)" << result.totalBlankLines;
@@ -646,13 +720,22 @@ std::string WebServer::buildCodeStatsJson(const backend::CodeStatsResult& result
     oss << R"(,"includeBlank":)" << (result.includeBlankLines ? "true" : "false")
         << R"(,"includeComments":)" << (result.includeCommentLines ? "true" : "false") << ",";
 
+    oss << R"("includedLanguages":[)";
+    for (std::size_t i = 0; i < included.size(); ++i) {
+        if (i > 0) {
+            oss << ",";
+        }
+        oss << "\"" << jsonEscape(included[i]) << "\"";
+    }
+    oss << "],";
+
     oss << R"("languages":[)";
     std::size_t emitted = 0;
     for (const auto& [lang, summary] : result.languageSummaries) {
         if (emitted > 0) {
             oss << ",";
         }
-        oss << R"({"language":")" << lang << R"(",)"
+        oss << R"({"language":")" << jsonEscape(lang) << R"(",)"
             << R"("files":)" << summary.fileCount << ","
             << R"("lines":)" << summary.lineCount;
         if (result.includeBlankLines) {
@@ -664,23 +747,23 @@ std::string WebServer::buildCodeStatsJson(const backend::CodeStatsResult& result
         oss << "}";
         ++emitted;
     }
-    if (emitted == 0 && !options.languages.empty()) {
-        bool first = true;
-        for (const auto& lang : options.languages) {
-            const auto it = result.languageSummaries.find(lang);
-            backend::LanguageSummary summary{};
-            if (it != result.languageSummaries.end()) {
-                summary = it->second;
-            }
-            if (!first) {
-                oss << ",";
-            }
-            oss << R"({"language":")" << lang << R"(",)"
-                << R"("files":)" << summary.fileCount << ","
-                << R"("lines":)" << summary.lineCount;
-            if (result.includeBlankLines) {
-                oss << R"(,"blankLines":)" << summary.blankLineCount;
-            }
+        if (emitted == 0 && !options.languages.empty()) {
+            bool first = true;
+            for (const auto& lang : options.languages) {
+                const auto it = result.languageSummaries.find(lang);
+                backend::LanguageSummary summary{};
+                if (it != result.languageSummaries.end()) {
+                    summary = it->second;
+                }
+                if (!first) {
+                    oss << ",";
+                }
+                oss << R"({"language":")" << jsonEscape(lang) << R"(",)"
+                    << R"("files":)" << summary.fileCount << ","
+                    << R"("lines":)" << summary.lineCount;
+                if (result.includeBlankLines) {
+                    oss << R"(,"blankLines":)" << summary.blankLineCount;
+                }
             if (result.includeCommentLines) {
                 oss << R"(,"commentLines":)" << summary.commentLineCount;
             }

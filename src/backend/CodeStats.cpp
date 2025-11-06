@@ -223,7 +223,6 @@ void CodeStatsAnalyzer::visitFile(const std::filesystem::path& filePath,
     static const std::vector<std::string> pyExt{".py"};
 
     const std::string ext = filePath.extension().string();
-    LanguageSummary* summary = nullptr;
     std::string languageKey;
 
     if (hasExtension(filePath, javaExt)) {

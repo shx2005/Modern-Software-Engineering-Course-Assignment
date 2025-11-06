@@ -686,6 +686,56 @@
         text-align: center;
       }
 
+      .stats-modal {
+        position: fixed;
+        inset: 0;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        background: rgba(2, 6, 23, 0.75);
+        backdrop-filter: blur(8px);
+        z-index: 165;
+      }
+
+      .stats-modal.active {
+        display: flex;
+      }
+
+      .stats-modal-card {
+        width: min(480px, 90vw);
+        padding: 1.6rem 1.8rem;
+        border-radius: 1.2rem;
+        background: rgba(15, 23, 42, 0.92);
+        color: var(--text-primary);
+        box-shadow: 0 20px 55px rgba(8, 47, 73, 0.55);
+        border: 1px solid rgba(148, 163, 184, 0.35);
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+
+      .stats-modal-card h4 {
+        margin: 0;
+        font-size: 1.25rem;
+        letter-spacing: 0.05em;
+      }
+
+      .stats-modal-close {
+        position: absolute;
+        top: 0.6rem;
+        right: 0.8rem;
+        border: none;
+        background: transparent;
+        color: rgba(226, 232, 240, 0.7);
+        font-size: 1.4rem;
+        cursor: pointer;
+      }
+
+      .stats-modal-close:hover {
+        color: #fff;
+      }
+
       .stats-panel {
         position: fixed;
         right: 24px;
@@ -1135,7 +1185,7 @@
         </div>
       </div>
     </div>
-    <div id="duck-dialog" class="duck-dialog" hidden>
+  <div id="duck-dialog" class="duck-dialog" hidden>
       <div class="duck-dialog-card">
         <button id="duck-close" class="duck-close" aria-label="关闭">×</button>
         <h3>飞行助手小鸭上线</h3>
@@ -1144,6 +1194,13 @@
           <button id="duck-send">发送</button>
         </div>
         <p id="duck-response" class="duck-response"></p>
+      </div>
+    </div>
+    <div id="stats-function-modal" class="stats-modal">
+      <div class="stats-modal-card">
+        <button id="stats-modal-close" class="stats-modal-close" aria-label="关闭">×</button>
+        <h4 id="stats-modal-title">函数信息</h4>
+        <p id="stats-modal-message"></p>
       </div>
     </div>
 
@@ -1194,6 +1251,10 @@
       const statsIncludeComments = document.getElementById("stats-include-comments");
       const statsPrintLongest = document.getElementById("stats-print-longest");
       const statsPrintShortest = document.getElementById("stats-print-shortest");
+      const statsFunctionModal = document.getElementById("stats-function-modal");
+      const statsModalTitle = document.getElementById("stats-modal-title");
+      const statsModalMessage = document.getElementById("stats-modal-message");
+      const statsModalClose = document.getElementById("stats-modal-close");
 
       const directionButtons = {
         up: { disabled: true },
@@ -1296,6 +1357,10 @@
 
       function applyEnvelopeUpdates(envelopes) {
         const activeIds = new Set();
+        const bottom =
+          gridState.heightPx > 0
+            ? gridState.heightPx - CELL_SIZE
+            : gridState.height > 0 ? (gridState.height - 1) * CELL_SIZE : 0;
 
         envelopes.forEach((envelope) => {
           const envelopeId = envelope.id ?? `${envelope.x ?? 0}-${envelope.y ?? 0}`;
@@ -1310,7 +1375,7 @@
               element: node,
               x: (envelope.x ?? 0) * CELL_SIZE,
               y: initialY,
-              targetY: (envelope.y ?? 0) * CELL_SIZE,
+              targetY: bottom,
               velocity,
             };
             gridState.envelopes.set(envelopeId, state);
@@ -1326,11 +1391,7 @@
           node.title = `红包面额：${envelope.value ?? 0}（${sizeNameMap[envelope.size] ?? ""}）`;
 
           state.x = (envelope.x ?? 0) * CELL_SIZE;
-          const newTargetY = (envelope.y ?? 0) * CELL_SIZE;
-          if (state.targetY === undefined || newTargetY < state.y) {
-            state.y = -CELL_SIZE * (0.5 + Math.random() * 2);
-          }
-          state.targetY = newTargetY;
+          state.targetY = bottom;
           state.element.style.transform = `translate3d(${state.x}px, ${state.y}px, 0)`;
         });
 
@@ -1355,23 +1416,23 @@
             state.targetY = (gridState.heightPx || CELL_SIZE * (gridState.height || 20)) - CELL_SIZE;
           }
 
-          if (state.y < state.targetY) {
-            state.y = Math.min(state.y + state.velocity * deltaSeconds, state.targetY);
-          } else if (state.y > state.targetY) {
-            state.y = state.targetY;
-          }
+        if (state.y < state.targetY) {
+          state.y = Math.min(state.y + state.velocity * deltaSeconds, state.targetY);
+        } else if (state.y > state.targetY) {
+          state.y = state.targetY;
+        }
 
-          const limit =
-            gridState.heightPx > 0
-              ? gridState.heightPx + CELL_SIZE
-              : CELL_SIZE * (gridState.height || 20);
+        const limit =
+          gridState.heightPx > 0
+            ? gridState.heightPx + CELL_SIZE
+            : CELL_SIZE * (gridState.height || 20);
 
-          if (state.y > limit) {
-            expired.push(id);
-            return;
-          }
-          state.element.style.transform = `translate3d(${state.x}px, ${state.y}px, 0)`;
-        });
+        if (state.y >= state.targetY - 0.1 || state.y > limit) {
+          expired.push(id);
+          return;
+        }
+        state.element.style.transform = `translate3d(${state.x}px, ${state.y}px, 0)`;
+      });
         expired.forEach((id) => removeEnvelopeState(id));
 
         requestAnimationFrame(animationFrame);
@@ -1495,6 +1556,14 @@
         } else {
           statsAdvancedPanel.setAttribute("hidden", "hidden");
           statsAdvancedToggle.textContent = "高级选项";
+        }
+      });
+      statsModalClose.addEventListener("click", () => {
+        statsFunctionModal.classList.remove("active");
+      });
+      statsFunctionModal.addEventListener("click", (event) => {
+        if (event.target === statsFunctionModal) {
+          statsFunctionModal.classList.remove("active");
         }
       });
 
@@ -1713,6 +1782,10 @@
           const total = data.totalLines ?? 0;
           statsMessage.textContent =
             `目录 ${data.directory ?? directory} 的统计完成，总计 ${total} 行代码。`;
+          statsResults.dataset.directory = data.directory ?? directory;
+          statsResults.dataset.languages = selectedLanguages.join(",");
+          statsResults.dataset.includeBlank = includeBlank ? "true" : "false";
+          statsResults.dataset.includeComments = includeComments ? "true" : "false";
         } catch (error) {
           statsMessage.textContent = error && error.message ? error.message : "统计失败，请重试。";
           console.error(error);
@@ -1723,6 +1796,40 @@
         statsResults.hidden = false;
         const languages = data.languages || [];
         const colors = ["#38bdf8", "#22d3ee", "#a855f7", "#f472b6", "#fb923c", "#facc15"];
+        const includeBlank = Boolean(data.includeBlank);
+        const includeComments = Boolean(data.includeComments);
+
+        statsResults.dataset.includeBlank = includeBlank ? "true" : "false";
+        statsResults.dataset.includeComments = includeComments ? "true" : "false";
+
+        const languageTokens = [];
+        if (Array.isArray(data.includedLanguages)) {
+          data.includedLanguages.forEach((name) => {
+            const lower = String(name).toLowerCase();
+            if (lower.includes("c/c++") || lower.includes("c++") || lower.includes("c/c")) {
+              languageTokens.push("cpp");
+            } else if (lower.includes("java")) {
+              languageTokens.push("java");
+            } else if (lower.includes("python")) {
+              languageTokens.push("python");
+            }
+          });
+        }
+        if (languageTokens.length === 0 && Array.isArray(languages)) {
+          languages.forEach((item) => {
+            const lower = String(item.language).toLowerCase();
+            if (lower.includes("c/c++") || lower.includes("c++") || lower.includes("c/c")) {
+              languageTokens.push("cpp");
+            } else if (lower.includes("java")) {
+              languageTokens.push("java");
+            } else if (lower.includes("python")) {
+              languageTokens.push("python");
+            }
+          });
+        }
+        statsResults.dataset.languages = languageTokens.join(",");
+        const fallbackDirectory = statsDirectory.value.trim() || ".";
+        statsResults.dataset.directory = data.directory ?? fallbackDirectory;
 
         statsBarChart.innerHTML = "";
         const maxLines = Math.max(1, ...languages.map((item) => item.lines));
@@ -1740,11 +1847,20 @@
 
           const fill = document.createElement("div");
           fill.className = "bar-fill";
-          fill.style.width = `${(item.lines / maxLines) * 100}%`;
+          fill.style.width = `${maxLines === 0 ? 0 : (item.lines / maxLines) * 100}%`;
           fill.style.background = `linear-gradient(90deg, ${colors[index % colors.length]}, ${colors[(index + 1) % colors.length]})`;
 
           const value = document.createElement("span");
-          value.textContent = `${item.lines} 行`;
+          let detailText = `${item.lines} 行`;
+          if (includeBlank) {
+            const blanks = item.blankLines ?? 0;
+            detailText += `，空行 ${blanks}`;
+          }
+          if (includeComments) {
+            const comments = item.commentLines ?? 0;
+            detailText += `，注释 ${comments}`;
+          }
+          value.textContent = detailText;
           value.style.color = "var(--text-secondary)";
 
           track.appendChild(fill);
@@ -1775,8 +1891,8 @@
           colorBox.className = "pie-color";
           colorBox.style.background = colors[index % colors.length];
 
-          const text = document.createElement("span");
           const percent = totalLines === 0 ? 0 : ((item.lines / totalLines) * 100).toFixed(1);
+          const text = document.createElement("span");
           text.textContent = `${item.language}: ${item.lines} 行 (${percent}%)`;
 
           legendItem.append(colorBox, text);
@@ -1792,7 +1908,9 @@
           <div>中位数：${(py.medianLength || 0).toFixed(2)} 行</div>
         `;
 
-        statsResults.dataset.directory = data.directory ?? ".";
+        if (data.directory) {
+          statsResults.dataset.directory = data.directory;
+        }
       }
 
       async function printFunctionSummary(type) {
@@ -1804,31 +1922,62 @@
           statsResults.dataset.directory && statsResults.dataset.directory.length > 0
             ? statsResults.dataset.directory
             : statsDirectory.value.trim() || ".";
+        let languagesParam = [];
+        if (statsResults.dataset.languages && statsResults.dataset.languages.length > 0) {
+          languagesParam = statsResults.dataset.languages
+            .split(",")
+            .map((item) => item.trim())
+            .filter((item) => item.length > 0);
+        } else {
+          languagesParam = Object.entries(statsLanguageChecks)
+            .filter(([, checkbox]) => checkbox.checked)
+            .map(([key]) => key);
+        }
+        const includeBlank =
+          statsResults.dataset.includeBlank === "true" || statsIncludeBlank.checked;
+        const includeComments =
+          statsResults.dataset.includeComments === "true" || statsIncludeComments.checked;
         const endpoint =
           type === "longest" ? "/print_longest_function" : "/print_shortest_function";
 
         try {
+          const bodyParams = new URLSearchParams();
+          bodyParams.set("directory", directory);
+          if (languagesParam.length > 0) {
+            bodyParams.set("languages", languagesParam.join(","));
+          }
+          bodyParams.set("includeBlank", includeBlank ? "true" : "false");
+          bodyParams.set("includeComments", includeComments ? "true" : "false");
+
           const response = await fetch(endpoint, {
             method: "POST",
             headers: { "Content-Type": "application/x-www-form-urlencoded" },
-            body: `directory=${encodeURIComponent(directory)}`,
+            body: bodyParams.toString(),
           });
           if (!response.ok) {
-            throw new Error("打印失败，请检查服务器日志。");
+            throw new Error("打印失败，请检查服务器返回。");
           }
-          statsMessage.textContent =
-            type === "longest" ? "最长函数信息已打印至服务器日志。" : "最短函数信息已打印至服务器日志。";
+          const data = await response.json();
+          if (data && data.success) {
+            statsModalTitle.textContent = type === "longest" ? "最长函数" : "最短函数";
+            statsModalMessage.textContent = data.message || "函数信息已打印。";
+            statsFunctionModal.classList.add("active");
+          } else {
+            statsMessage.textContent =
+              (data && data.message) || "打印失败，请稍后再试。";
+          }
         } catch (error) {
-          statsMessage.textContent = error && error.message ? error.message : "打印失败，请稍后再试。";
+          statsMessage.textContent =
+            error && error.message ? error.message : "打印失败，请稍后再试。";
           console.error(error);
         }
       }
 
-     async function submitDuckCommand() {
-       const command = duckInput.value.trim();
-       if (!command) {
-         duckResponse.textContent = "请输入命令";
-         duckInput.focus();
+      async function submitDuckCommand() {
+        const command = duckInput.value.trim();
+        if (!command) {
+          duckResponse.textContent = "请输入命令";
+          duckInput.focus();
           return;
         }
         if (command.includes("红包雨")) {

@@ -24,8 +24,8 @@ public:
     // Placeholder for future Java bridge integration (e.g., JNI).
     LanguageSummary analyzeJavaFromContext(const std::string& rootIdentifier);
 
-    void printLongestFunction(const CodeStatsResult& result) const;
-    void printShortestFunction(const CodeStatsResult& result) const;
+    std::string printLongestFunction(const CodeStatsResult& result) const;
+    std::string printShortestFunction(const CodeStatsResult& result) const;
 
 private:
     CodeStatsAnalyzer m_analyzer;

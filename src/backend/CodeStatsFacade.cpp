@@ -55,11 +55,10 @@ LanguageSummary CodeStatsFacade::analyzeJavaFromContext(const std::string& rootI
     return {};
 }
 
-void CodeStatsFacade::printLongestFunction(const CodeStatsResult& result) const {
+std::string CodeStatsFacade::printLongestFunction(const CodeStatsResult& result) const {
     const auto& details = result.pythonFunctions.details;
     if (details.empty()) {
-        Logger::instance().log("[CodeStatsFacade] 未发现 Python 函数，无法打印最长函数信息。");
-        return;
+        return {};
     }
     const PythonFunctionDetail* best = nullptr;
     for (const auto& detail : details) {
@@ -68,21 +67,19 @@ void CodeStatsFacade::printLongestFunction(const CodeStatsResult& result) const 
         }
     }
     if (best == nullptr) {
-        Logger::instance().log("[CodeStatsFacade] 未能确定最长函数。");
-        return;
+        return {};
     }
     std::ostringstream oss;
-    oss << "[CodeStatsFacade] 最长函数 " << best->name << " ("
+    oss << "最长函数 " << best->name << " ("
         << best->length << " 行) - 文件: " << best->filePath.string()
         << " (第 " << best->lineNumber << " 行)";
-    Logger::instance().log(oss.str());
+    return oss.str();
 }
 
-void CodeStatsFacade::printShortestFunction(const CodeStatsResult& result) const {
+std::string CodeStatsFacade::printShortestFunction(const CodeStatsResult& result) const {
     const auto& details = result.pythonFunctions.details;
     if (details.empty()) {
-        Logger::instance().log("[CodeStatsFacade] 未发现 Python 函数，无法打印最短函数信息。");
-        return;
+        return {};
     }
     const PythonFunctionDetail* best = nullptr;
     for (const auto& detail : details) {
@@ -91,14 +88,13 @@ void CodeStatsFacade::printShortestFunction(const CodeStatsResult& result) const
         }
     }
     if (best == nullptr) {
-        Logger::instance().log("[CodeStatsFacade] 未能确定最短函数。");
-        return;
+        return {};
     }
     std::ostringstream oss;
-    oss << "[CodeStatsFacade] 最短函数 " << best->name << " ("
+    oss << "最短函数 " << best->name << " ("
         << best->length << " 行) - 文件: " << best->filePath.string()
         << " (第 " << best->lineNumber << " 行)";
-    Logger::instance().log(oss.str());
+    return oss.str();
 }
 
 LanguageStatsC get_cpp_code_stats(const char* directory) {
@@ -119,14 +115,20 @@ void print_longest_function(const char* directory) {
     const std::filesystem::path rootPath = directory != nullptr ? directory : ".";
     CodeStatsFacade facade;
     const CodeStatsResult result = facade.analyzeAll(rootPath);
-    facade.printLongestFunction(result);
+    const std::string summary = facade.printLongestFunction(result);
+    if (!summary.empty()) {
+        std::cout << summary << std::endl;
+    }
 }
 
 void print_shortest_function(const char* directory) {
     const std::filesystem::path rootPath = directory != nullptr ? directory : ".";
     CodeStatsFacade facade;
     const CodeStatsResult result = facade.analyzeAll(rootPath);
-    facade.printShortestFunction(result);
+    const std::string summary = facade.printShortestFunction(result);
+    if (!summary.empty()) {
+        std::cout << summary << std::endl;
+    }
 }
 
 }  // namespace backend
