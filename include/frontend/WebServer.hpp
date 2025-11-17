@@ -11,6 +11,7 @@
 #include <mutex>
 #include <string>
 #include <unordered_set>
+#include <vector>
 
 namespace frontend {
 
@@ -39,7 +40,8 @@ private:
     void sendHttpResponse(int clientSocket,
                           const std::string& statusLine,
                           const std::string& body,
-                          const std::string& contentType = "text/plain");
+                          const std::string& contentType = "text/plain",
+                          const std::vector<std::pair<std::string, std::string>>& extraHeaders = {});
     void sendNotFound(int clientSocket);
     void sendBadRequest(int clientSocket, const std::string& message);
     void sendInternalError(int clientSocket, const std::string& message);
@@ -53,12 +55,16 @@ private:
     backend::MoveDirection parseDirection(const std::string& payload) const;
     std::string parseAction(const std::string& payload) const;
     std::string parseDirectory(const std::string& payload) const;
+    std::unordered_set<std::string> parseLanguages(const std::string& payload) const;
+    bool parseBooleanFlag(const std::string& payload, const std::string& key) const;
+    std::string parseFormat(const std::string& payload) const;
+    std::string decodeFormValue(const std::string& value) const;
     std::string buildCodeStatsJson(const backend::CodeStatsResult& result,
                                    const std::string& directory,
                                    const backend::CodeStatsOptions& options) const;
-    std::unordered_set<std::string> parseLanguages(const std::string& payload) const;
-    bool parseBooleanFlag(const std::string& payload, const std::string& key) const;
-    std::string decodeFormValue(const std::string& value) const;
+    std::string buildCsvReport(const backend::CodeStatsResult& result) const;
+    std::string buildJsonReport(const backend::CodeStatsResult& result) const;
+    std::string buildXlsxReport(const backend::CodeStatsResult& result) const;
     std::string buildLayoutSettingsJson(const std::string& userId);
 };
 

@@ -41,7 +41,19 @@ CodeStatsResult CodeStatsFacade::analyzeAll(const std::filesystem::path& root,
 
 LanguageSummary CodeStatsFacade::analyzeCppOnly(const std::filesystem::path& root) {
     const CodeStatsResult result = analyzeAll(root);
-    return findSummaryForKey(result, "C/C++");
+    LanguageSummary summary{};
+    const auto accumulate = [&](const std::string& key) {
+        const auto it = result.languageSummaries.find(key);
+        if (it != result.languageSummaries.end()) {
+            summary.fileCount += it->second.fileCount;
+            summary.lineCount += it->second.lineCount;
+            summary.blankLineCount += it->second.blankLineCount;
+            summary.commentLineCount += it->second.commentLineCount;
+        }
+    };
+    accumulate("C");
+    accumulate("C++");
+    return summary;
 }
 
 LanguageSummary CodeStatsFacade::analyzeJavaOnly(const std::filesystem::path& root) {
@@ -56,14 +68,13 @@ LanguageSummary CodeStatsFacade::analyzeJavaFromContext(const std::string& rootI
 }
 
 std::string CodeStatsFacade::printLongestFunction(const CodeStatsResult& result) const {
-    const auto& details = result.pythonFunctions.details;
-    if (details.empty()) {
-        return {};
-    }
-    const PythonFunctionDetail* best = nullptr;
-    for (const auto& detail : details) {
-        if (best == nullptr || detail.length > best->length) {
-            best = &detail;
+    const FunctionDetail* best = nullptr;
+    for (const auto& [language, summary] : result.languageSummaries) {
+        (void)language;
+        for (const auto& detail : summary.functions.details) {
+            if (best == nullptr || detail.length > best->length) {
+                best = &detail;
+            }
         }
     }
     if (best == nullptr) {
@@ -71,20 +82,19 @@ std::string CodeStatsFacade::printLongestFunction(const CodeStatsResult& result)
     }
     std::ostringstream oss;
     oss << "最长函数 " << best->name << " ("
-        << best->length << " 行) - 文件: " << best->filePath.string()
-        << " (第 " << best->lineNumber << " 行)";
+        << best->length << " 行, 语言: " << best->language << ") - 文件: "
+        << best->filePath.string() << " (第 " << best->lineNumber << " 行)";
     return oss.str();
 }
 
 std::string CodeStatsFacade::printShortestFunction(const CodeStatsResult& result) const {
-    const auto& details = result.pythonFunctions.details;
-    if (details.empty()) {
-        return {};
-    }
-    const PythonFunctionDetail* best = nullptr;
-    for (const auto& detail : details) {
-        if (best == nullptr || detail.length < best->length) {
-            best = &detail;
+    const FunctionDetail* best = nullptr;
+    for (const auto& [language, summary] : result.languageSummaries) {
+        (void)language;
+        for (const auto& detail : summary.functions.details) {
+            if (best == nullptr || detail.length < best->length) {
+                best = &detail;
+            }
         }
     }
     if (best == nullptr) {
@@ -92,8 +102,8 @@ std::string CodeStatsFacade::printShortestFunction(const CodeStatsResult& result
     }
     std::ostringstream oss;
     oss << "最短函数 " << best->name << " ("
-        << best->length << " 行) - 文件: " << best->filePath.string()
-        << " (第 " << best->lineNumber << " 行)";
+        << best->length << " 行, 语言: " << best->language << ") - 文件: "
+        << best->filePath.string() << " (第 " << best->lineNumber << " 行)";
     return oss.str();
 }
 

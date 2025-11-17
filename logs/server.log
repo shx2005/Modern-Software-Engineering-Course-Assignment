@@ -1,234 +1,222 @@
-2025-11-06 18:51:58 | Initializing tank red envelope game.
-2025-11-06 18:51:58 | Engine seeded with value 3668308898.
-2025-11-06 18:51:58 | Resolved HTTP port 8080.
-2025-11-06 18:51:58 | Starting web server event loop.
-2025-11-06 18:51:58 | Web server listening on port 8080.
-2025-11-06 18:52:02 | Request: GET /state
-2025-11-06 18:52:02 | Request: GET /state
-2025-11-06 18:52:02 | Request: GET /state
-2025-11-06 18:52:03 | Request: GET /state
-2025-11-06 18:52:03 | Request: GET /
-2025-11-06 18:52:03 | Request: GET /static/duck2.jpg
-2025-11-06 18:52:03 | Request: GET /static/duck.png
-2025-11-06 18:52:04 | Request: POST /reset
-2025-11-06 18:52:04 | Reset request completed and engine reseeded.
-2025-11-06 18:52:04 | Request: GET /state
-2025-11-06 18:52:04 | Request: GET /static/tank.jpg
-2025-11-06 18:52:05 | Request: GET /state
-2025-11-06 18:52:05 | Request: GET /state
-2025-11-06 18:52:05 | Request: POST /move
-2025-11-06 18:52:05 | Move request, body='direction=down', moved=true, timeUp=false.
-2025-11-06 18:52:05 | Request: GET /state
-2025-11-06 18:52:06 | Request: POST /move
-2025-11-06 18:52:06 | Move request, body='direction=left', moved=true, timeUp=false.
-2025-11-06 18:52:06 | Request: GET /state
-2025-11-06 18:52:06 | Request: GET /state
-2025-11-06 18:52:06 | Request: GET /state
-2025-11-06 18:52:06 | Request: POST /move
-2025-11-06 18:52:06 | Move request, body='direction=up', moved=true, timeUp=false.
-2025-11-06 18:52:06 | Request: GET /state
-2025-11-06 18:52:07 | Request: GET /state
-2025-11-06 18:52:07 | Request: POST /move
-2025-11-06 18:52:07 | Move request, body='direction=left', moved=true, timeUp=false.
-2025-11-06 18:52:07 | Request: GET /state
-2025-11-06 18:52:07 | Request: POST /move
-2025-11-06 18:52:07 | Move request, body='direction=right', moved=true, timeUp=false.
-2025-11-06 18:52:07 | Request: GET /state
-2025-11-06 18:52:07 | Request: GET /state
-2025-11-06 18:52:07 | Request: POST /move
-2025-11-06 18:52:07 | Move request, body='direction=right', moved=true, timeUp=false.
-2025-11-06 18:52:07 | Request: GET /state
-2025-11-06 18:52:07 | Request: POST /move
-2025-11-06 18:52:07 | Move request, body='direction=right', moved=true, timeUp=false.
-2025-11-06 18:52:07 | Request: GET /state
-2025-11-06 18:52:07 | Request: POST /move
-2025-11-06 18:52:07 | Move request, body='direction=right', moved=true, timeUp=false.
-2025-11-06 18:52:08 | Request: GET /state
-2025-11-06 18:52:08 | Request: GET /state
-2025-11-06 18:52:08 | Request: POST /move
-2025-11-06 18:52:08 | Move request, body='direction=right', moved=true, timeUp=false.
-2025-11-06 18:52:08 | Request: GET /state
-2025-11-06 18:52:08 | Request: POST /move
-2025-11-06 18:52:08 | Move request, body='direction=right', moved=true, timeUp=false.
-2025-11-06 18:52:08 | Request: GET /state
-2025-11-06 18:52:08 | Request: POST /move
-2025-11-06 18:52:08 | Move request, body='direction=right', moved=true, timeUp=false.
-2025-11-06 18:52:08 | Request: GET /state
-2025-11-06 18:52:08 | Request: POST /move
-2025-11-06 18:52:08 | Move request, body='direction=right', moved=false, timeUp=false.
-2025-11-06 18:52:08 | Request: GET /state
-2025-11-06 18:52:08 | Request: POST /move
-2025-11-06 18:52:08 | Move request, body='direction=right', moved=false, timeUp=false.
-2025-11-06 18:52:08 | Request: GET /state
-2025-11-06 18:52:08 | Request: GET /state
-2025-11-06 18:52:08 | Request: POST /move
-2025-11-06 18:52:08 | Move request, body='direction=left', moved=true, timeUp=false.
-2025-11-06 18:52:08 | Request: GET /state
-2025-11-06 18:52:08 | Request: GET /state
-2025-11-06 18:52:08 | Request: POST /move
-2025-11-06 18:52:08 | Move request, body='direction=left', moved=true, timeUp=false.
-2025-11-06 18:52:08 | Request: GET /state
-2025-11-06 18:52:09 | Request: POST /move
-2025-11-06 18:52:09 | Move request, body='direction=left', moved=true, timeUp=false.
-2025-11-06 18:52:09 | Request: GET /state
-2025-11-06 18:52:09 | Request: POST /move
-2025-11-06 18:52:09 | Move request, body='direction=left', moved=true, timeUp=false.
-2025-11-06 18:52:09 | Request: GET /state
-2025-11-06 18:52:09 | Request: POST /move
-2025-11-06 18:52:09 | Move request, body='direction=left', moved=true, timeUp=false.
-2025-11-06 18:52:09 | Request: GET /state
-2025-11-06 18:52:09 | Request: POST /move
-2025-11-06 18:52:09 | Move request, body='direction=left', moved=true, timeUp=false.
-2025-11-06 18:52:09 | Request: GET /state
-2025-11-06 18:52:09 | Request: GET /state
-2025-11-06 18:52:09 | Request: POST /move
-2025-11-06 18:52:09 | Move request, body='direction=left', moved=true, timeUp=false.
-2025-11-06 18:52:09 | Request: GET /state
-2025-11-06 18:52:09 | Request: POST /move
-2025-11-06 18:52:09 | Move request, body='direction=left', moved=true, timeUp=false.
-2025-11-06 18:52:09 | Request: GET /state
-2025-11-06 18:52:09 | Request: POST /move
-2025-11-06 18:52:09 | Move request, body='direction=left', moved=true, timeUp=false.
-2025-11-06 18:52:09 | Request: GET /state
-2025-11-06 18:52:09 | Request: POST /move
-2025-11-06 18:52:09 | Move request, body='direction=left', moved=true, timeUp=false.
-2025-11-06 18:52:09 | Request: GET /state
-2025-11-06 18:52:09 | Request: POST /move
-2025-11-06 18:52:09 | Move request, body='direction=left', moved=false, timeUp=false.
-2025-11-06 18:52:09 | Request: GET /state
-2025-11-06 18:52:09 | Request: POST /move
-2025-11-06 18:52:09 | Move request, body='direction=left', moved=false, timeUp=false.
-2025-11-06 18:52:09 | Request: GET /state
-2025-11-06 18:52:09 | Request: GET /state
-2025-11-06 18:52:09 | Request: POST /move
-2025-11-06 18:52:09 | Move request, body='direction=down', moved=true, timeUp=false.
-2025-11-06 18:52:09 | Request: GET /state
-2025-11-06 18:52:10 | Request: GET /state
-2025-11-06 18:52:10 | Request: POST /move
-2025-11-06 18:52:10 | Move request, body='direction=down', moved=true, timeUp=false.
-2025-11-06 18:52:10 | Request: GET /state
-2025-11-06 18:52:10 | Request: POST /move
-2025-11-06 18:52:10 | Move request, body='direction=down', moved=true, timeUp=false.
-2025-11-06 18:52:10 | Request: GET /state
-2025-11-06 18:52:10 | Request: POST /move
-2025-11-06 18:52:10 | Move request, body='direction=down', moved=true, timeUp=false.
-2025-11-06 18:52:10 | Request: GET /state
-2025-11-06 18:52:10 | Request: POST /move
-2025-11-06 18:52:10 | Move request, body='direction=down', moved=true, timeUp=false.
-2025-11-06 18:52:10 | Request: GET /state
-2025-11-06 18:52:10 | Request: GET /state
-2025-11-06 18:52:10 | Request: POST /move
-2025-11-06 18:52:10 | Move request, body='direction=down', moved=false, timeUp=false.
-2025-11-06 18:52:10 | Request: GET /state
-2025-11-06 18:52:11 | Request: POST /move
-2025-11-06 18:52:11 | Move request, body='direction=up', moved=true, timeUp=false.
-2025-11-06 18:52:11 | Request: GET /state
-2025-11-06 18:52:11 | Request: GET /state
-2025-11-06 18:52:11 | Request: GET /state
-2025-11-06 18:52:11 | Request: POST /move
-2025-11-06 18:52:11 | Move request, body='direction=up', moved=true, timeUp=false.
-2025-11-06 18:52:11 | Request: GET /state
-2025-11-06 18:52:11 | Request: POST /move
-2025-11-06 18:52:11 | Move request, body='direction=up', moved=true, timeUp=false.
-2025-11-06 18:52:11 | Request: GET /state
-2025-11-06 18:52:11 | Request: POST /move
-2025-11-06 18:52:11 | Move request, body='direction=up', moved=true, timeUp=false.
-2025-11-06 18:52:11 | Request: GET /state
-2025-11-06 18:52:11 | Request: POST /move
-2025-11-06 18:52:11 | Move request, body='direction=up', moved=true, timeUp=false.
-2025-11-06 18:52:11 | Request: GET /state
-2025-11-06 18:52:11 | Request: POST /move
-2025-11-06 18:52:11 | Move request, body='direction=up', moved=true, timeUp=false.
-2025-11-06 18:52:11 | Request: GET /state
-2025-11-06 18:52:12 | Request: POST /move
-2025-11-06 18:52:12 | Move request, body='direction=up', moved=true, timeUp=false.
-2025-11-06 18:52:12 | Request: GET /state
-2025-11-06 18:52:12 | Request: GET /state
-2025-11-06 18:52:12 | Request: POST /move
-2025-11-06 18:52:12 | Move request, body='direction=right', moved=true, timeUp=false.
-2025-11-06 18:52:12 | Request: GET /state
-2025-11-06 18:52:12 | Request: GET /state
-2025-11-06 18:52:12 | Request: POST /move
-2025-11-06 18:52:12 | Move request, body='direction=right', moved=true, timeUp=false.
-2025-11-06 18:52:12 | Request: GET /state
-2025-11-06 18:52:12 | Request: GET /state
-2025-11-06 18:52:13 | Request: GET /state
-2025-11-06 18:52:13 | Request: POST /move
-2025-11-06 18:52:13 | Move request, body='direction=up', moved=true, timeUp=false.
-2025-11-06 18:52:13 | Request: GET /state
-2025-11-06 18:52:13 | Request: GET /state
-2025-11-06 18:52:14 | Request: POST /move
-2025-11-06 18:52:14 | Move request, body='direction=down', moved=true, timeUp=false.
-2025-11-06 18:52:14 | Request: GET /state
-2025-11-06 18:52:14 | Request: GET /state
-2025-11-06 18:52:14 | Request: POST /move
-2025-11-06 18:52:14 | Move request, body='direction=down', moved=true, timeUp=false.
-2025-11-06 18:52:14 | Request: GET /state
-2025-11-06 18:52:14 | Request: GET /state
-2025-11-06 18:52:14 | Request: POST /move
-2025-11-06 18:52:14 | Move request, body='direction=down', moved=true, timeUp=false.
-2025-11-06 18:52:14 | Request: GET /state
-2025-11-06 18:52:15 | Request: POST /move
-2025-11-06 18:52:15 | Move request, body='direction=down', moved=true, timeUp=false.
-2025-11-06 18:52:15 | Request: GET /state
-2025-11-06 18:52:15 | Request: GET /state
-2025-11-06 18:52:15 | Request: POST /move
-2025-11-06 18:52:15 | Move request, body='direction=down', moved=true, timeUp=false.
-2025-11-06 18:52:15 | Request: GET /state
-2025-11-06 18:52:15 | Request: GET /state
-2025-11-06 18:52:15 | Request: POST /move
-2025-11-06 18:52:15 | Move request, body='direction=right', moved=true, timeUp=false.
-2025-11-06 18:52:15 | Request: GET /state
-2025-11-06 18:52:16 | Request: GET /state
-2025-11-06 18:52:16 | Request: POST /move
-2025-11-06 18:52:16 | Move request, body='direction=left', moved=true, timeUp=false.
-2025-11-06 18:52:16 | Request: GET /state
-2025-11-06 18:52:16 | Request: GET /state
-2025-11-06 18:52:16 | Request: POST /move
-2025-11-06 18:52:16 | Move request, body='direction=right', moved=true, timeUp=false.
-2025-11-06 18:52:16 | Request: GET /state
-2025-11-06 18:52:16 | Request: GET /state
-2025-11-06 18:52:17 | Request: POST /move
-2025-11-06 18:52:17 | Move request, body='direction=right', moved=true, timeUp=false.
-2025-11-06 18:52:17 | Request: GET /state
-2025-11-06 18:52:17 | Request: GET /state
-2025-11-06 18:52:17 | Request: POST /move
-2025-11-06 18:52:17 | Move request, body='direction=right', moved=true, timeUp=false.
-2025-11-06 18:52:17 | Request: GET /state
-2025-11-06 18:52:17 | Request: POST /move
-2025-11-06 18:52:17 | Move request, body='direction=right', moved=true, timeUp=false.
-2025-11-06 18:52:17 | Request: GET /state
-2025-11-06 18:52:17 | Request: GET /state
-2025-11-06 18:52:17 | Request: POST /move
-2025-11-06 18:52:17 | Move request, body='direction=right', moved=true, timeUp=false.
-2025-11-06 18:52:17 | Request: GET /state
-2025-11-06 18:52:18 | Request: POST /move
-2025-11-06 18:52:18 | Move request, body='direction=right', moved=true, timeUp=false.
-2025-11-06 18:52:18 | Request: GET /state
-2025-11-06 18:52:18 | Request: GET /state
-2025-11-06 18:52:18 | Request: POST /move
-2025-11-06 18:52:18 | Move request, body='direction=right', moved=true, timeUp=false.
-2025-11-06 18:52:18 | Request: GET /state
-2025-11-06 18:52:18 | Request: POST /move
-2025-11-06 18:52:18 | Move request, body='direction=left', moved=true, timeUp=false.
-2025-11-06 18:52:18 | Request: GET /state
-2025-11-06 18:52:18 | Request: GET /state
-2025-11-06 18:52:19 | Request: POST /move
-2025-11-06 18:52:19 | Move request, body='direction=left', moved=true, timeUp=false.
-2025-11-06 18:52:19 | Request: GET /state
-2025-11-06 18:52:19 | Request: POST /move
-2025-11-06 18:52:19 | Move request, body='direction=left', moved=true, timeUp=false.
-2025-11-06 18:52:19 | Request: GET /state
-2025-11-06 18:52:19 | Request: GET /state
-2025-11-06 18:52:19 | Request: POST /move
-2025-11-06 18:52:19 | Move request, body='direction=left', moved=true, timeUp=false.
-2025-11-06 18:52:19 | Request: GET /state
-2025-11-06 18:52:19 | Request: GET /state
-2025-11-06 18:52:20 | Request: GET /state
-2025-11-06 18:52:20 | Request: GET /state
-2025-11-06 18:52:21 | Request: GET /state
-2025-11-06 18:52:21 | Request: GET /state
-2025-11-06 18:52:22 | Request: GET /state
-2025-11-06 18:52:23 | Request: GET /state
-2025-11-06 18:52:24 | Request: GET /state
-2025-11-06 18:52:25 | Request: GET /state
+2025-11-17 21:41:08 | Initializing tank red envelope game.
+2025-11-17 21:41:08 | Engine seeded with value 2145535224.
+2025-11-17 21:41:08 | Resolved HTTP port 8080.
+2025-11-17 21:41:08 | Starting web server event loop.
+2025-11-17 21:41:08 | Web server listening on port 8080.
+2025-11-17 21:41:08 | Request: GET /state
+2025-11-17 21:41:09 | Request: GET /state
+2025-11-17 21:41:09 | Request: GET /state
+2025-11-17 21:41:10 | Request: GET /state
+2025-11-17 21:41:10 | Request: GET /state
+2025-11-17 21:41:11 | Request: GET /state
+2025-11-17 21:41:11 | Request: GET /
+2025-11-17 21:41:11 | Request: GET /static/duck.png
+2025-11-17 21:41:11 | Request: GET /static/hat1.png
+2025-11-17 21:41:11 | Request: GET /static/cloth1.png
+2025-11-17 21:41:11 | Request: GET /static/duck2.jpg
+2025-11-17 21:41:11 | Request: GET /static/hat2.png
+2025-11-17 21:41:11 | Request: GET /static/hat3.png
+2025-11-17 21:41:11 | Request: GET /static/cloth3.png
+2025-11-17 21:41:11 | Request: GET /static/cloth2.png
+2025-11-17 21:41:12 | Request: POST /reset
+2025-11-17 21:41:12 | Reset request completed and engine reseeded.
+2025-11-17 21:41:12 | Request: GET /state
+2025-11-17 21:41:12 | Request: GET /static/tank.jpg
+2025-11-17 21:41:12 | Request: GET /state
+2025-11-17 21:41:13 | Request: GET /state
+2025-11-17 21:41:13 | Request: GET /state
+2025-11-17 21:41:14 | Request: GET /state
+2025-11-17 21:41:14 | Request: GET /state
+2025-11-17 21:41:15 | Request: GET /state
+2025-11-17 21:41:15 | Request: POST /move
+2025-11-17 21:41:15 | Move request, body='direction=up', moved=true, timeUp=false.
+2025-11-17 21:41:15 | Request: GET /state
+2025-11-17 21:41:15 | Request: GET /state
+2025-11-17 21:41:15 | Request: POST /move
+2025-11-17 21:41:15 | Move request, body='direction=up', moved=true, timeUp=false.
+2025-11-17 21:41:15 | Request: GET /state
+2025-11-17 21:41:15 | Request: POST /move
+2025-11-17 21:41:15 | Move request, body='direction=up', moved=true, timeUp=false.
+2025-11-17 21:41:15 | Request: GET /state
+2025-11-17 21:41:15 | Request: POST /move
+2025-11-17 21:41:15 | Move request, body='direction=up', moved=true, timeUp=false.
+2025-11-17 21:41:15 | Request: GET /state
+2025-11-17 21:41:15 | Request: POST /move
+2025-11-17 21:41:15 | Move request, body='direction=up', moved=true, timeUp=false.
+2025-11-17 21:41:15 | Request: GET /state
+2025-11-17 21:41:15 | Request: GET /state
+2025-11-17 21:41:16 | Request: POST /move
+2025-11-17 21:41:16 | Move request, body='direction=right', moved=true, timeUp=false.
+2025-11-17 21:41:16 | Request: GET /state
+2025-11-17 21:41:16 | Request: GET /state
+2025-11-17 21:41:16 | Request: POST /move
+2025-11-17 21:41:16 | Move request, body='direction=right', moved=true, timeUp=false.
+2025-11-17 21:41:16 | Request: GET /state
+2025-11-17 21:41:16 | Request: POST /move
+2025-11-17 21:41:16 | Move request, body='direction=right', moved=true, timeUp=false.
+2025-11-17 21:41:16 | Request: GET /state
+2025-11-17 21:41:16 | Request: GET /state
+2025-11-17 21:41:17 | Request: GET /state
+2025-11-17 21:41:17 | Request: POST /move
+2025-11-17 21:41:17 | Move request, body='direction=down', moved=true, timeUp=false.
+2025-11-17 21:41:17 | Request: GET /state
+2025-11-17 21:41:17 | Request: GET /state
+2025-11-17 21:41:17 | Request: POST /move
+2025-11-17 21:41:17 | Move request, body='direction=left', moved=true, timeUp=false.
+2025-11-17 21:41:17 | Request: GET /state
+2025-11-17 21:41:18 | Request: GET /state
+2025-11-17 21:41:18 | Request: POST /move
+2025-11-17 21:41:18 | Move request, body='direction=left', moved=true, timeUp=false.
+2025-11-17 21:41:18 | Request: GET /state
+2025-11-17 21:41:18 | Request: POST /move
+2025-11-17 21:41:18 | Move request, body='direction=left', moved=true, timeUp=false.
+2025-11-17 21:41:18 | Request: GET /state
+2025-11-17 21:41:18 | Request: POST /move
+2025-11-17 21:41:18 | Move request, body='direction=down', moved=true, timeUp=false.
+2025-11-17 21:41:18 | Request: GET /state
+2025-11-17 21:41:18 | Request: GET /state
+2025-11-17 21:41:18 | Request: POST /move
+2025-11-17 21:41:18 | Move request, body='direction=right', moved=true, timeUp=false.
+2025-11-17 21:41:18 | Request: GET /state
+2025-11-17 21:41:19 | Request: GET /state
+2025-11-17 21:41:19 | Request: GET /state
+2025-11-17 21:41:20 | Request: GET /state
+2025-11-17 21:41:20 | Request: GET /state
+2025-11-17 21:41:20 | Request: GET /static/duck.png
+2025-11-17 21:41:20 | Request: GET /state
+2025-11-17 21:41:21 | Request: GET /state
+2025-11-17 21:41:21 | Request: GET /state
+2025-11-17 21:41:22 | Request: GET /state
+2025-11-17 21:41:22 | Request: GET /static/duck2.jpg
+2025-11-17 21:41:22 | Request: GET /state
+2025-11-17 21:41:23 | Request: GET /state
+2025-11-17 21:41:23 | Request: GET /static/duck2.jpg
+2025-11-17 21:41:23 | Request: GET /state
+2025-11-17 21:41:24 | Request: GET /state
+2025-11-17 21:41:24 | Request: GET /state
+2025-11-17 21:41:24 | Request: POST /move
+2025-11-17 21:41:24 | Move request, body='direction=down', moved=true, timeUp=false.
+2025-11-17 21:41:24 | Request: GET /state
+2025-11-17 21:41:24 | Request: GET /state
+2025-11-17 21:41:25 | Request: GET /state
+2025-11-17 21:41:25 | Request: POST /move
+2025-11-17 21:41:25 | Move request, body='direction=left', moved=true, timeUp=false.
+2025-11-17 21:41:25 | Request: GET /state
+2025-11-17 21:41:25 | Request: GET /state
+2025-11-17 21:41:26 | Request: GET /state
+2025-11-17 21:41:26 | Request: POST /move
+2025-11-17 21:41:26 | Move request, body='direction=down', moved=true, timeUp=false.
+2025-11-17 21:41:26 | Request: GET /state
+2025-11-17 21:41:26 | Request: GET /state
+2025-11-17 21:41:27 | Request: GET /state
+2025-11-17 21:41:27 | Request: GET /state
+2025-11-17 21:41:27 | Request: POST /codestats
+2025-11-17 21:41:27 | Code stats computed for directory '.testcase5'.
+2025-11-17 21:41:28 | Request: GET /state
+2025-11-17 21:41:28 | Request: GET /state
+2025-11-17 21:41:29 | Request: GET /state
+2025-11-17 21:41:29 | Request: GET /state
+2025-11-17 21:41:29 | Request: GET /state
+2025-11-17 21:41:30 | Request: GET /state
+2025-11-17 21:41:30 | Request: GET /state
+2025-11-17 21:41:31 | Request: GET /state
+2025-11-17 21:41:31 | Request: GET /state
+2025-11-17 21:41:32 | Request: GET /state
+2025-11-17 21:41:32 | Request: GET /state
+2025-11-17 21:41:33 | Request: GET /state
+2025-11-17 21:41:33 | Request: GET /state
+2025-11-17 21:41:33 | Request: POST /codestats
+2025-11-17 21:41:33 | Request: GET /state
+2025-11-17 21:41:34 | Request: GET /state
+2025-11-17 21:41:34 | Request: GET /state
+2025-11-17 21:41:35 | Code stats computed for directory './testcase5'.
+2025-11-17 21:41:35 | Request: GET /state
+2025-11-17 21:41:35 | Request: GET /state
+2025-11-17 21:41:36 | Request: GET /state
+2025-11-17 21:41:36 | Request: GET /state
+2025-11-17 21:41:37 | Request: GET /state
+2025-11-17 21:41:37 | Request: GET /state
+2025-11-17 21:41:38 | Request: GET /state
+2025-11-17 21:41:38 | Request: GET /state
+2025-11-17 21:41:38 | Request: GET /state
+2025-11-17 21:41:39 | Request: GET /state
+2025-11-17 21:41:39 | Request: GET /state
+2025-11-17 21:41:40 | Request: GET /state
+2025-11-17 21:41:40 | Request: GET /state
+2025-11-17 21:41:41 | Request: GET /state
+2025-11-17 21:41:41 | Request: POST /codestats
+2025-11-17 21:41:41 | Request: GET /state
+2025-11-17 21:41:42 | Request: GET /state
+2025-11-17 21:41:42 | Code stats computed for directory './testcase5'.
+2025-11-17 21:41:42 | Request: GET /state
+2025-11-17 21:41:42 | Request: GET /state
+2025-11-17 21:41:43 | Request: GET /state
+2025-11-17 21:41:43 | Request: GET /state
+2025-11-17 21:41:44 | Request: GET /state
+2025-11-17 21:41:44 | Request: GET /state
+2025-11-17 21:41:45 | Request: GET /state
+2025-11-17 21:41:45 | Request: GET /state
+2025-11-17 21:41:46 | Request: GET /state
+2025-11-17 21:41:46 | Request: GET /state
+2025-11-17 21:41:47 | Request: GET /state
+2025-11-17 21:41:47 | Request: GET /state
+2025-11-17 21:41:47 | Request: GET /state
+2025-11-17 21:41:48 | Request: GET /state
+2025-11-17 21:41:48 | Request: GET /state
+2025-11-17 21:41:49 | Request: GET /state
+2025-11-17 21:41:49 | Request: GET /state
+2025-11-17 21:41:50 | Request: GET /state
+2025-11-17 21:41:50 | Request: GET /state
+2025-11-17 21:41:51 | Request: GET /state
+2025-11-17 21:41:51 | Request: GET /state
+2025-11-17 21:41:51 | Request: GET /state
+2025-11-17 21:41:52 | Request: GET /state
+2025-11-17 21:41:52 | Request: GET /state
+2025-11-17 21:41:53 | Request: POST /codestats
+2025-11-17 21:41:53 | Request: GET /state
+2025-11-17 21:41:53 | Request: GET /state
+2025-11-17 21:41:54 | Request: GET /state
+2025-11-17 21:41:54 | Code stats computed for directory './testcase5'.
+2025-11-17 21:41:54 | Request: GET /state
+2025-11-17 21:41:55 | Request: GET /state
+2025-11-17 21:41:55 | Request: GET /state
+2025-11-17 21:41:56 | Request: GET /state
+2025-11-17 21:41:56 | Request: GET /state
+2025-11-17 21:41:56 | Request: GET /state
+2025-11-17 21:41:57 | Request: GET /state
+2025-11-17 21:41:57 | Request: GET /state
+2025-11-17 21:41:58 | Request: GET /state
+2025-11-17 21:41:58 | Request: GET /state
+2025-11-17 21:41:59 | Request: GET /state
+2025-11-17 21:41:59 | Request: GET /state
+2025-11-17 21:42:00 | Request: GET /state
+2025-11-17 21:42:00 | Request: GET /state
+2025-11-17 21:42:00 | Request: GET /state
+2025-11-17 21:42:01 | Request: GET /state
+2025-11-17 21:42:01 | Request: GET /state
+2025-11-17 21:42:02 | Request: GET /state
+2025-11-17 21:42:02 | Request: GET /state
+2025-11-17 21:42:03 | Request: GET /state
+2025-11-17 21:42:03 | Request: GET /state
+2025-11-17 21:42:04 | Request: GET /state
+2025-11-17 21:42:04 | Request: GET /state
+2025-11-17 21:42:05 | Request: GET /state
+2025-11-17 21:42:05 | Request: GET /state
+2025-11-17 21:42:06 | Request: GET /state
+2025-11-17 21:42:07 | Request: GET /state
+2025-11-17 21:42:08 | Request: GET /state
+2025-11-17 21:42:09 | Request: GET /state
+2025-11-17 21:42:10 | Request: GET /state
+2025-11-17 21:42:11 | Request: GET /state
+2025-11-17 21:42:12 | Request: GET /state
+2025-11-17 21:42:13 | Request: GET /state
+2025-11-17 21:42:14 | Request: GET /state
+2025-11-17 21:42:15 | Request: GET /state
+2025-11-17 21:42:16 | Request: GET /state
+2025-11-17 21:42:17 | Request: GET /state
+2025-11-17 21:42:18 | Request: GET /state
+2025-11-17 21:42:19 | Request: GET /state
+2025-11-17 21:42:20 | Request: GET /state
+2025-11-17 21:42:21 | Request: GET /state
+2025-11-17 21:42:22 | Request: GET /state
+2025-11-17 21:42:23 | Request: GET /state

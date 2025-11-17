@@ -119,6 +119,81 @@ LineMetrics computeLineMetrics(const std::filesystem::path& filePath,
     return metrics;
 }
 
+int countChar(const std::string& text, char target) {
+    return static_cast<int>(std::count(text.begin(), text.end(), target));
+}
+
+std::string toLowerCopy(std::string value) {
+    std::transform(value.begin(),
+                   value.end(),
+                   value.begin(),
+                   [](unsigned char ch) { return static_cast<char>(std::tolower(ch)); });
+    return value;
+}
+
+bool isControlKeyword(const std::string& token) {
+    static const std::unordered_set<std::string> keywords{
+        "if",    "for",   "while", "switch", "catch",   "return", "else",
+        "class", "struct","enum",  "case",   "default", "using",  "typedef"};
+    return keywords.find(token) != keywords.end();
+}
+
+bool looksLikeFunctionSignature(const std::string& signature) {
+    const std::string trimmedSignature = trim(signature);
+    if (trimmedSignature.empty()) {
+        return false;
+    }
+    const std::size_t parenOpen = trimmedSignature.find('(');
+    const std::size_t parenClose = trimmedSignature.find(')');
+    if (parenOpen == std::string::npos || parenClose == std::string::npos || parenClose < parenOpen) {
+        return false;
+    }
+    if (trimmedSignature[0] == '#' || trimmedSignature.back() == ';') {
+        return false;
+    }
+    const std::string lower = toLowerCopy(trimmedSignature);
+    const std::size_t firstSpace = lower.find_first_of(" \t(");
+    if (firstSpace != std::string::npos) {
+        const std::string head = lower.substr(0, firstSpace);
+        if (isControlKeyword(head)) {
+            return false;
+        }
+    }
+    if (lower.find(" operator") != std::string::npos) {
+        return true;
+    }
+    if (lower.find(" namespace ") != std::string::npos || lower.rfind("namespace", 0) == 0) {
+        return false;
+    }
+    return true;
+}
+
+std::string extractFunctionName(const std::string& signature) {
+    const std::size_t parenPos = signature.find('(');
+    if (parenPos == std::string::npos) {
+        return "anonymous";
+    }
+    std::string left = trim(signature.substr(0, parenPos));
+    if (left.empty()) {
+        return "anonymous";
+    }
+    const std::size_t tokenStart = left.find_last_of(" \t:*&");
+    std::string candidate =
+        tokenStart == std::string::npos ? left : left.substr(tokenStart + 1);
+    if (candidate.empty()) {
+        candidate = "anonymous";
+    }
+    return candidate;
+}
+
+std::string stripInlineComment(const std::string& line) {
+    const std::size_t commentPos = line.find("//");
+    if (commentPos != std::string::npos) {
+        return line.substr(0, commentPos);
+    }
+    return line;
+}
+
 }  // namespace
 
 CodeStatsResult CodeStatsAnalyzer::analyze(const std::filesystem::path& root,
@@ -183,24 +258,31 @@ CodeStatsResult CodeStatsAnalyzer::analyze(const std::filesystem::path& root,
         ++it;
     }
 
-    // Finalize Python summary statistics.
-    auto& pySummary = result.pythonFunctions;
-    if (!pySummary.lengths.empty()) {
-        std::sort(pySummary.lengths.begin(), pySummary.lengths.end());
-        pySummary.functionCount = pySummary.lengths.size();
-        pySummary.minLength = pySummary.lengths.front();
-        pySummary.maxLength = pySummary.lengths.back();
-        pySummary.averageLength =
-            std::accumulate(pySummary.lengths.begin(), pySummary.lengths.end(), 0.0) /
-            static_cast<double>(pySummary.lengths.size());
+    for (auto& [_, summary] : result.languageSummaries) {
+        auto& fnSummary = summary.functions;
+        if (fnSummary.lengths.empty()) {
+            fnSummary.functionCount = 0;
+            fnSummary.minLength = 0;
+            fnSummary.maxLength = 0;
+            fnSummary.averageLength = 0.0;
+            fnSummary.medianLength = 0.0;
+            continue;
+        }
+        std::sort(fnSummary.lengths.begin(), fnSummary.lengths.end());
+        fnSummary.functionCount = fnSummary.lengths.size();
+        fnSummary.minLength = fnSummary.lengths.front();
+        fnSummary.maxLength = fnSummary.lengths.back();
+        fnSummary.averageLength =
+            std::accumulate(fnSummary.lengths.begin(), fnSummary.lengths.end(), 0.0) /
+            static_cast<double>(fnSummary.lengths.size());
 
-        if (pySummary.lengths.size() % 2 == 0) {
-            const std::size_t mid = pySummary.lengths.size() / 2;
-            pySummary.medianLength =
-                (pySummary.lengths[mid - 1] + pySummary.lengths[mid]) / 2.0;
+        if (fnSummary.lengths.size() % 2 == 0) {
+            const std::size_t mid = fnSummary.lengths.size() / 2;
+            fnSummary.medianLength =
+                (fnSummary.lengths[mid - 1] + fnSummary.lengths[mid]) / 2.0;
         } else {
-            pySummary.medianLength = static_cast<double>(
-                pySummary.lengths[pySummary.lengths.size() / 2]);
+            fnSummary.medianLength = static_cast<double>(
+                fnSummary.lengths[fnSummary.lengths.size() / 2]);
         }
     }
 
@@ -217,18 +299,23 @@ CodeStatsResult CodeStatsAnalyzer::analyze(const std::filesystem::path& root,
 void CodeStatsAnalyzer::visitFile(const std::filesystem::path& filePath,
                                   CodeStatsResult& result,
                                   const CodeStatsOptions& options) {
-    static const std::vector<std::string> javaExt{".java"};
+    static const std::vector<std::string> cExt{".c"};
     static const std::vector<std::string> cppExt{
-        ".c",  ".C",  ".cc",  ".cpp", ".cxx", ".h",  ".hpp", ".hh", ".hxx"};
+        ".C",  ".cc", ".cpp", ".cxx", ".h", ".hpp", ".hh", ".hxx"};
+    static const std::vector<std::string> csharpExt{".cs"};
+    static const std::vector<std::string> javaExt{".java"};
     static const std::vector<std::string> pyExt{".py"};
 
-    const std::string ext = filePath.extension().string();
     std::string languageKey;
 
-    if (hasExtension(filePath, javaExt)) {
-        languageKey = "Java";
+    if (hasExtension(filePath, cExt)) {
+        languageKey = "C";
     } else if (hasExtension(filePath, cppExt)) {
-        languageKey = "C/C++";
+        languageKey = "C++";
+    } else if (hasExtension(filePath, csharpExt)) {
+        languageKey = "C#";
+    } else if (hasExtension(filePath, javaExt)) {
+        languageKey = "Java";
     } else if (hasExtension(filePath, pyExt)) {
         languageKey = "Python";
     }
@@ -258,13 +345,15 @@ void CodeStatsAnalyzer::visitFile(const std::filesystem::path& filePath,
         result.totalCommentLines += metrics.comment;
     }
 
-    if (ext == ".py") {
-        analyzePythonFile(filePath, result);
+    if (languageKey == "Python") {
+        analyzePythonFile(filePath, languageSummary);
+    } else if (languageKey == "C" || languageKey == "C++" || languageKey == "C#" || languageKey == "Java") {
+        analyzeBraceLanguageFile(filePath, languageKey, languageSummary);
     }
 }
 
 void CodeStatsAnalyzer::analyzePythonFile(const std::filesystem::path& filePath,
-                                          CodeStatsResult& result) {
+                                          LanguageSummary& summary) {
     std::ifstream stream(filePath);
     if (!stream.is_open()) {
         return;
@@ -307,14 +396,125 @@ void CodeStatsAnalyzer::analyzePythonFile(const std::filesystem::path& filePath,
                 }
             }
             if (length > 0) {
-                result.pythonFunctions.lengths.push_back(length);
-                PythonFunctionDetail detail{};
+                summary.functions.lengths.push_back(length);
+                FunctionDetail detail{};
+                detail.language = "Python";
                 detail.name = functionName;
                 detail.filePath = filePath;
                 detail.lineNumber = definitionLine;
                 detail.length = length;
-                result.pythonFunctions.details.push_back(detail);
+                summary.functions.details.push_back(detail);
             }
+        }
+    }
+}
+
+void CodeStatsAnalyzer::analyzeBraceLanguageFile(const std::filesystem::path& filePath,
+                                                 const std::string& language,
+                                                 LanguageSummary& summary) {
+    std::ifstream stream(filePath);
+    if (!stream.is_open()) {
+        return;
+    }
+
+    std::vector<std::string> lines;
+    std::string line;
+    while (std::getline(stream, line)) {
+        lines.push_back(line);
+    }
+
+    std::string signatureBuffer;
+    int signatureStartLine = 0;
+    int pendingSignatureLines = 0;
+    bool awaitingBody = false;
+    bool insideFunction = false;
+    int braceDepth = 0;
+    int functionLength = 0;
+    int functionStartLine = 0;
+    std::string functionName;
+
+    auto resetSignature = [&]() {
+        signatureBuffer.clear();
+        signatureStartLine = 0;
+        pendingSignatureLines = 0;
+        awaitingBody = false;
+    };
+
+    for (std::size_t i = 0; i < lines.size(); ++i) {
+        std::string codeLine = stripInlineComment(lines[i]);
+        const std::string trimmed = trim(codeLine);
+
+        if (!insideFunction) {
+            if (trimmed.empty()) {
+                if (!awaitingBody) {
+                    resetSignature();
+                }
+                continue;
+            }
+
+            if (signatureBuffer.empty()) {
+                signatureStartLine = static_cast<int>(i + 1);
+            }
+
+            signatureBuffer += " " + codeLine;
+            pendingSignatureLines += 1;
+
+            if (signatureBuffer.find('(') != std::string::npos) {
+                awaitingBody = true;
+            }
+
+            if (awaitingBody && codeLine.find('{') != std::string::npos) {
+                if (looksLikeFunctionSignature(signatureBuffer)) {
+                    insideFunction = true;
+                    functionStartLine = signatureStartLine;
+                    functionName = extractFunctionName(signatureBuffer);
+                    functionLength = pendingSignatureLines;
+                    braceDepth = countChar(codeLine, '{') - countChar(codeLine, '}');
+                    if (braceDepth <= 0) {
+                        FunctionDetail detail{};
+                        detail.language = language;
+                        detail.name = functionName;
+                        detail.filePath = filePath;
+                        detail.lineNumber = static_cast<std::size_t>(functionStartLine);
+                        detail.length = functionLength;
+                        summary.functions.lengths.push_back(functionLength);
+                        summary.functions.details.push_back(detail);
+                        insideFunction = false;
+                        resetSignature();
+                        functionLength = 0;
+                        functionName.clear();
+                    }
+                } else {
+                    resetSignature();
+                }
+            } else if (!awaitingBody && codeLine.find(';') != std::string::npos) {
+                resetSignature();
+            }
+            continue;
+        }
+
+        if (!trimmed.empty()) {
+            functionLength += 1;
+        }
+
+        braceDepth += countChar(codeLine, '{');
+        braceDepth -= countChar(codeLine, '}');
+
+        if (braceDepth <= 0) {
+            FunctionDetail detail{};
+            detail.language = language;
+            detail.name = functionName.empty() ? "anonymous" : functionName;
+            detail.filePath = filePath;
+            detail.lineNumber = static_cast<std::size_t>(functionStartLine);
+            detail.length = functionLength;
+            summary.functions.lengths.push_back(functionLength);
+            summary.functions.details.push_back(detail);
+
+            insideFunction = false;
+            resetSignature();
+            braceDepth = 0;
+            functionLength = 0;
+            functionName.clear();
         }
     }
 }

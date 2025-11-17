@@ -92,7 +92,9 @@ void GameEngine::reset() {
 
     m_startTime = std::chrono::steady_clock::now();
     std::cout << "Before handleCollisions" << std::endl;
-    handleCollisions();  // Ensure starting position collects envelopes if any overlap.
+    const double exactX = m_tank.getExactX();
+    const double exactY = m_tank.getExactY();
+    handleCollisions(exactX, exactY);  // Ensure starting position collects envelopes if any overlap.
     std::cout << "GameEngine::reset end" << std::endl;
 }
 
@@ -101,8 +103,10 @@ bool GameEngine::moveTank(MoveDirection direction) {
         return false;
     }
 
+    const double previousX = m_tank.getExactX();
+    const double previousY = m_tank.getExactY();
     const bool moved = m_tank.move(direction, m_config.worldWidth, m_config.worldHeight);
-    handleCollisions();
+    handleCollisions(previousX, previousY);
     return moved;
 }
 
@@ -247,14 +251,57 @@ void GameEngine::respawnEnvelope(std::size_t index) {
     m_envelopes[index] = createRandomEnvelope(m_nextEnvelopeId++);
 }
 
-void GameEngine::handleCollisions() {
+void GameEngine::handleCollisions(double previousX, double previousY) {
+    const double currentX = m_tank.getExactX();
+    const double currentY = m_tank.getExactY();
     for (std::size_t i = 0; i < m_envelopes.size(); ++i) {
-        if (isColliding(m_tank, m_envelopes[i])) {
+        const bool collidedAtPosition = isColliding(m_tank, m_envelopes[i]);
+        const bool crossedDuringMove =
+            intersectsMovementPath(previousX, previousY, currentX, currentY, m_envelopes[i]);
+        if (collidedAtPosition || crossedDuringMove) {
             m_stats.collectedCount += 1;
             m_stats.collectedValue += m_envelopes[i].getValue();
             respawnEnvelope(i);
         }
     }
+}
+
+bool GameEngine::intersectsMovementPath(double startX,
+                                        double startY,
+                                        double endX,
+                                        double endY,
+                                        const RedEnvelope& envelope) const noexcept {
+    const int radius = std::max(0, envelope.getCollectionRadius());
+    if (radius == 0) {
+        return false;
+    }
+
+    const double dx = endX - startX;
+    const double dy = endY - startY;
+
+    if (dx == 0.0 && dy == 0.0) {
+        const Position center = envelope.getPosition();
+        const double fx = startX - static_cast<double>(center.x);
+        const double fy = startY - static_cast<double>(center.y);
+        return (fx * fx + fy * fy) <= static_cast<double>(radius * radius);
+    }
+
+    const Position center = envelope.getPosition();
+    const double fx = startX - static_cast<double>(center.x);
+    const double fy = startY - static_cast<double>(center.y);
+
+    const double a = dx * dx + dy * dy;
+    const double b = 2.0 * (fx * dx + fy * dy);
+    const double c = fx * fx + fy * fy - static_cast<double>(radius * radius);
+    double discriminant = b * b - 4.0 * a * c;
+    if (discriminant < 0.0) {
+        return false;
+    }
+    discriminant = std::sqrt(discriminant);
+    const double invDenominator = 1.0 / (2.0 * a);
+    const double t1 = (-b - discriminant) * invDenominator;
+    const double t2 = (-b + discriminant) * invDenominator;
+    return (t1 >= 0.0 && t1 <= 1.0) || (t2 >= 0.0 && t2 <= 1.0);
 }
 
 }  // namespace backend

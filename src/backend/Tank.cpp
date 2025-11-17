@@ -23,6 +23,14 @@ Position Tank::getPosition() const noexcept {
     return m_position;
 }
 
+double Tank::getExactX() const noexcept {
+    return m_exactX;
+}
+
+double Tank::getExactY() const noexcept {
+    return m_exactY;
+}
+
 int Tank::getMoveStep() const noexcept {
     return m_moveStep;
 }

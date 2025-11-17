@@ -14,6 +14,8 @@ public:
     explicit Tank(Position startPosition, int moveStep = 1);
 
     Position getPosition() const noexcept;
+    double getExactX() const noexcept;
+    double getExactY() const noexcept;
     int getMoveStep() const noexcept;
 
     bool move(MoveDirection direction, int worldWidth, int worldHeight) noexcept;

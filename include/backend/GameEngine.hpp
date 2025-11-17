@@ -61,7 +61,12 @@ private:
 
     RedEnvelope createRandomEnvelope(std::size_t id);
     void respawnEnvelope(std::size_t index);
-    void handleCollisions();
+    void handleCollisions(double previousX, double previousY);
+    bool intersectsMovementPath(double startX,
+                                double startY,
+                                double endX,
+                                double endY,
+                                const RedEnvelope& envelope) const noexcept;
 };
 
 }  // namespace backend
