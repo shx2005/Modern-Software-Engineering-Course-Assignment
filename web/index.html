@@ -942,6 +942,30 @@
         outline: none;
       }
 
+      .pause-floating {
+        position: fixed;
+        right: 24px;
+        bottom: 160px;
+        z-index: 120;
+      }
+
+      #btn-pause-floating {
+        padding: 0.55rem 1.4rem;
+        border-radius: 999px;
+        border: none;
+        background: linear-gradient(135deg, #facc15, #fb923c);
+        color: #0f172a;
+        font-weight: 600;
+        cursor: pointer;
+        box-shadow: 0 12px 30px rgba(250, 204, 21, 0.45);
+        transition: transform 0.25s ease, box-shadow 0.25s ease;
+      }
+
+      #btn-pause-floating:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 18px 38px rgba(250, 204, 21, 0.6);
+      }
+
       .stats-function-table {
         width: 100%;
         border-collapse: collapse;
@@ -1315,6 +1339,13 @@
         </div>
       </section>
 
+      <section class="controls">
+        <div class="control-helpers">
+          <button id="btn-pause-top" class="action-button secondary">暂停</button>
+          <button id="btn-reset-top" class="action-button wide-button">重新开始</button>
+        </div>
+      </section>
+
       <section class="battlefield-shell">
         <div class="battlefield">
           <div id="grid">
@@ -1360,6 +1391,9 @@
       </div>
     </div>
     <button id="duck-settings-button" class="duck-settings-button">设置</button>
+    <div class="pause-floating">
+      <button id="btn-pause-floating" aria-label="暂停或继续" title="暂停/继续">暂停</button>
+    </div>
     <div class="stats-panel">
       <button id="stats-button" class="stats-button" aria-label="统计代码量">
         <img src="/static/duck2.jpg" alt="统计代码量" class="stats-icon" />
@@ -1469,6 +1503,9 @@
       const resetButton = document.getElementById("btn-reset");
       const rainButton = document.getElementById("btn-rain");
       const pauseButton = document.getElementById("btn-pause");
+      const topPauseButton = document.getElementById("btn-pause-top");
+      const topResetButton = document.getElementById("btn-reset-top");
+      const floatingPauseButton = document.getElementById("btn-pause-floating");
       const rainOverlay = document.getElementById("rain-overlay");
 
       const duckPanel = document.getElementById("duck-helper-panel");
@@ -2029,6 +2066,9 @@
         setControlsEnabled(false);
         resetButton.disabled = true;
         pauseButton.disabled = true;
+        if (topResetButton) topResetButton.disabled = true;
+        if (topPauseButton) topPauseButton.disabled = true;
+        if (floatingPauseButton) floatingPauseButton.disabled = true;
         rainButton.disabled = true;
         statusEl.textContent = "等待开始";
       }
@@ -2095,8 +2135,17 @@
 
       startButton.addEventListener("click", startGame);
       resetButton.addEventListener("click", resetGame);
+      if (topResetButton) {
+        topResetButton.addEventListener("click", resetGame);
+      }
       rainButton.addEventListener("click", triggerRain);
       pauseButton.addEventListener("click", togglePause);
+      if (topPauseButton) {
+        topPauseButton.addEventListener("click", togglePause);
+      }
+      if (floatingPauseButton) {
+        floatingPauseButton.addEventListener("click", togglePause);
+      }
 
       duckPanel.addEventListener("click", openDuckDialog);
       duckSettingsButton.addEventListener("click", () => duckUiManager.openSettings());
@@ -2210,8 +2259,13 @@
           rainInProgress = false;
           startOverlay.hidden = true;
           pauseButton.disabled = false;
+          if (topPauseButton) topPauseButton.disabled = false;
+          if (floatingPauseButton) floatingPauseButton.disabled = false;
           pauseButton.textContent = "暂停";
+          if (topPauseButton) topPauseButton.textContent = "暂停";
+          if (floatingPauseButton) floatingPauseButton.textContent = "暂停";
           resetButton.disabled = false;
+          if (topResetButton) topResetButton.disabled = false;
           rainButton.disabled = false;
           await refreshState(true);
           startPolling();
@@ -2231,6 +2285,9 @@
         stopPolling();
         resetButton.disabled = true;
         pauseButton.disabled = true;
+        if (topResetButton) topResetButton.disabled = true;
+        if (topPauseButton) topPauseButton.disabled = true;
+        if (floatingPauseButton) floatingPauseButton.disabled = true;
         statusEl.textContent = "重新部署中...";
         setHudPlaceholders();
         try {
@@ -2244,6 +2301,8 @@
           rainOverlay.classList.remove("active");
           rainOverlay.innerHTML = "";
           pauseButton.textContent = "暂停";
+          if (topPauseButton) topPauseButton.textContent = "暂停";
+          if (floatingPauseButton) floatingPauseButton.textContent = "暂停";
           await refreshState(true);
           startPolling();
           statusEl.textContent = "任务进行中";
@@ -2252,7 +2311,10 @@
           console.error(error);
         } finally {
           resetButton.disabled = false;
+          if (topResetButton) topResetButton.disabled = false;
           pauseButton.disabled = !gameStarted;
+          if (topPauseButton) topPauseButton.disabled = !gameStarted;
+          if (floatingPauseButton) floatingPauseButton.disabled = !gameStarted;
           rainButton.disabled = gameFinished || gamePaused;
         }
       }
@@ -2262,6 +2324,8 @@
           return;
         }
         pauseButton.disabled = true;
+        if (topPauseButton) topPauseButton.disabled = true;
+        if (floatingPauseButton) floatingPauseButton.disabled = true;
         statusEl.textContent = gamePaused ? "恢复飞行中..." : "悬停中...";
         try {
           const response = await fetch("/pause", {
@@ -2274,7 +2338,10 @@
           }
           const data = await response.json();
           gamePaused = Boolean(data.paused);
-          pauseButton.textContent = gamePaused ? "继续" : "暂停";
+          const label = gamePaused ? "继续" : "暂停";
+          pauseButton.textContent = label;
+          if (topPauseButton) topPauseButton.textContent = label;
+          if (floatingPauseButton) floatingPauseButton.textContent = label;
           if (gamePaused) {
             stopPolling();
           } else {
@@ -2287,6 +2354,8 @@
           console.error(error);
         } finally {
           pauseButton.disabled = false;
+          if (topPauseButton) topPauseButton.disabled = false;
+          if (floatingPauseButton) floatingPauseButton.disabled = false;
           rainButton.disabled = gameFinished || gamePaused || rainInProgress;
         }
       }
