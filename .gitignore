@@ -2,3 +2,4 @@ logs/*
 bin/*
 testcase/*
 testcase5/*
+*.pdf

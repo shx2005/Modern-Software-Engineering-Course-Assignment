@@ -1529,6 +1529,10 @@
         Large: "大",
       };
       const duckDefaultGreeting = "您好，有什么可以帮助你";
+      const duckStorageKeys = {
+        hat: "duck_hat_id",
+        cloth: "duck_cloth_id",
+      };
 
       class CostumePiece {
         constructor(id, name, imageUrl) {
@@ -1563,6 +1567,18 @@
         setCloth(piece) {
           this.cloth = piece ?? null;
         }
+        getHat() {
+          return this.hat;
+        }
+        getCloth() {
+          return this.cloth;
+        }
+        clearHat() {
+          this.hat = null;
+        }
+        clearCloth() {
+          this.cloth = null;
+        }
       }
 
       class CartoonDuck {
@@ -1579,6 +1595,9 @@
         applyCloth(cloth) {
           this.costume.setCloth(cloth);
           this.refreshLayers();
+        }
+        getCostume() {
+          return this.costume;
         }
         refreshLayers() {
           if (this.hatLayer) {
@@ -1599,6 +1618,172 @@
               this.clothLayer.classList.remove("active");
             }
           }
+        }
+      }
+
+      class DuckUIManager {
+        constructor(options) {
+          this.duckPanel = options.duckPanel;
+          this.settingsPanel = options.settingsPanel;
+          this.settingsOverlay = options.settingsOverlay;
+          this.hatOptionsContainer = options.hatOptionsContainer;
+          this.clothOptionsContainer = options.clothOptionsContainer;
+          this.cartoonDuck = options.cartoonDuck;
+          this.hats = options.hats || [];
+          this.clothes = options.clothes || [];
+          this.hatLayer = options.hatLayer;
+          this.clothLayer = options.clothLayer;
+
+          const datasetHat = this.hatLayer?.dataset.selectedHat || null;
+          const datasetCloth = this.clothLayer?.dataset.selectedCloth || null;
+          const storedHat = this.#loadFromStorage(duckStorageKeys.hat);
+          const storedCloth = this.#loadFromStorage(duckStorageKeys.cloth);
+
+          this.currentHatId = storedHat || datasetHat || "none";
+          this.currentClothId = storedCloth || datasetCloth || "none";
+
+          this.renderHatOptions(this.hats);
+          this.renderClothOptions(this.clothes);
+
+          const initialHat =
+            this.hats.find((item) => item.id === this.currentHatId) || null;
+          const initialCloth =
+            this.clothes.find((item) => item.id === this.currentClothId) || null;
+
+          this.setHat(initialHat);
+          this.setCloth(initialCloth);
+        }
+
+        #loadFromStorage(key) {
+          try {
+            const value = window.localStorage.getItem(key);
+            return value && value.length > 0 ? value : null;
+          } catch {
+            return null;
+          }
+        }
+
+        #saveToStorage(key, value) {
+          try {
+            if (value && value.length > 0) {
+              window.localStorage.setItem(key, value);
+            } else {
+              window.localStorage.removeItem(key);
+            }
+          } catch {
+            // ignore storage errors
+          }
+        }
+
+        openSettings() {
+          if (this.settingsPanel && this.settingsOverlay) {
+            this.settingsPanel.classList.add("open");
+            this.settingsOverlay.classList.add("visible");
+          }
+        }
+
+        closeSettings() {
+          if (this.settingsPanel && this.settingsOverlay) {
+            this.settingsPanel.classList.remove("open");
+            this.settingsOverlay.classList.remove("visible");
+          }
+        }
+
+        highlightSelection(container, activeId) {
+          if (!container) {
+            return;
+          }
+          container.querySelectorAll(".duck-settings-option").forEach((button) => {
+            if (button.dataset.id === activeId) {
+              button.classList.add("active");
+            } else {
+              button.classList.remove("active");
+            }
+          });
+        }
+
+        setHat(hat) {
+          this.currentHatId = hat ? hat.id : "none";
+          this.cartoonDuck.applyHat(hat || null);
+          if (this.hatLayer) {
+            if (hat) {
+              this.hatLayer.dataset.selectedHat = hat.id;
+            } else {
+              delete this.hatLayer.dataset.selectedHat;
+            }
+          }
+          this.highlightSelection(this.hatOptionsContainer, this.currentHatId);
+          this.#saveToStorage(
+            duckStorageKeys.hat,
+            hat ? hat.id : "",
+          );
+        }
+
+        setCloth(cloth) {
+          this.currentClothId = cloth ? cloth.id : "none";
+          this.cartoonDuck.applyCloth(cloth || null);
+          if (this.clothLayer) {
+            if (cloth) {
+              this.clothLayer.dataset.selectedCloth = cloth.id;
+            } else {
+              delete this.clothLayer.dataset.selectedCloth;
+            }
+          }
+          this.highlightSelection(this.clothOptionsContainer, this.currentClothId);
+          this.#saveToStorage(
+            duckStorageKeys.cloth,
+            cloth ? cloth.id : "",
+          );
+        }
+
+        renderHatOptions(hats) {
+          this.#renderOptions(hats, this.hatOptionsContainer, "hat");
+        }
+
+        renderClothOptions(clothes) {
+          this.#renderOptions(clothes, this.clothOptionsContainer, "cloth");
+        }
+
+        #renderOptions(items, container, type) {
+          if (!container) {
+            return;
+          }
+          container.innerHTML = "";
+          const noneLabel = type === "hat" ? "无帽子" : "无服饰";
+          const noneButton = document.createElement("button");
+          noneButton.type = "button";
+          noneButton.className = "duck-settings-option";
+          noneButton.dataset.id = "none";
+          noneButton.innerHTML = `<span>${noneLabel}</span>`;
+          noneButton.addEventListener("click", () => {
+            if (type === "hat") {
+              this.setHat(null);
+            } else {
+              this.setCloth(null);
+            }
+          });
+          container.appendChild(noneButton);
+
+          items.forEach((item) => {
+            const button = document.createElement("button");
+            button.type = "button";
+            button.className = "duck-settings-option";
+            button.dataset.id = item.id;
+            const img = document.createElement("img");
+            img.src = item.imageUrl;
+            img.alt = item.name;
+            const label = document.createElement("span");
+            label.textContent = item.name;
+            button.append(img, label);
+            button.addEventListener("click", () => {
+              if (type === "hat") {
+                this.setHat(item);
+              } else {
+                this.setCloth(item);
+              }
+            });
+            container.appendChild(button);
+          });
         }
       }
 
@@ -1866,82 +2051,18 @@
         new Cloth("cloth3", "翠羽飞行服", "/static/cloth3.png"),
       ];
       const cartoonDuck = new CartoonDuck(duckBaseImage, duckHatLayer, duckClothLayer);
-      let currentHatId = duckHatLayer.dataset.selectedHat || "none";
-      let currentClothId = duckClothLayer.dataset.selectedCloth || "none";
-
-      function highlightSelection(container, activeId) {
-        container.querySelectorAll(".duck-settings-option").forEach((button) => {
-          if (button.dataset.id === activeId) {
-            button.classList.add("active");
-          } else {
-            button.classList.remove("active");
-          }
-        });
-      }
-
-      function setSelectedCostume(type, piece) {
-        if (type === "hat") {
-          currentHatId = piece ? piece.id : "none";
-          cartoonDuck.applyHat(piece);
-          if (piece) {
-            duckHatLayer.dataset.selectedHat = piece.id;
-          } else {
-            delete duckHatLayer.dataset.selectedHat;
-          }
-          highlightSelection(duckHatOptions, currentHatId);
-        } else {
-          currentClothId = piece ? piece.id : "none";
-          cartoonDuck.applyCloth(piece);
-          if (piece) {
-            duckClothLayer.dataset.selectedCloth = piece.id;
-          } else {
-            delete duckClothLayer.dataset.selectedCloth;
-          }
-          highlightSelection(duckClothOptions, currentClothId);
-        }
-      }
-
-      function renderCostumeOptions(items, container, type) {
-        container.innerHTML = "";
-        const noneLabel = type === "hat" ? "无帽子" : "无服饰";
-        const noneButton = document.createElement("button");
-        noneButton.type = "button";
-        noneButton.className = "duck-settings-option";
-        noneButton.dataset.id = "none";
-        noneButton.innerHTML = `<span>${noneLabel}</span>`;
-        noneButton.addEventListener("click", () => setSelectedCostume(type, null));
-        container.appendChild(noneButton);
-
-        items.forEach((item) => {
-          const button = document.createElement("button");
-          button.type = "button";
-          button.className = "duck-settings-option";
-          button.dataset.id = item.id;
-          const img = document.createElement("img");
-          img.src = item.imageUrl;
-          img.alt = item.name;
-          const label = document.createElement("span");
-          label.textContent = item.name;
-          button.append(img, label);
-          button.addEventListener("click", () => setSelectedCostume(type, item));
-          container.appendChild(button);
-        });
-      }
-
-      renderCostumeOptions(hatCatalog, duckHatOptions, "hat");
-      renderCostumeOptions(clothCatalog, duckClothOptions, "cloth");
-      const initialHat = hatCatalog.find((item) => item.id === currentHatId) || null;
-      const initialCloth = clothCatalog.find((item) => item.id === currentClothId) || null;
-      if (initialHat) {
-        setSelectedCostume("hat", initialHat);
-      } else {
-        setSelectedCostume("hat", null);
-      }
-      if (initialCloth) {
-        setSelectedCostume("cloth", initialCloth);
-      } else {
-        setSelectedCostume("cloth", null);
-      }
+      const duckUiManager = new DuckUIManager({
+        duckPanel,
+        settingsPanel: duckSettingsPanel,
+        settingsOverlay: duckSettingsOverlay,
+        hatOptionsContainer: duckHatOptions,
+        clothOptionsContainer: duckClothOptions,
+        cartoonDuck,
+        hats: hatCatalog,
+        clothes: clothCatalog,
+        hatLayer: duckHatLayer,
+        clothLayer: duckClothLayer,
+      });
 
       function applyButtonProximityEffects() {
         interactiveButtons.forEach((button) => {
@@ -1978,9 +2099,9 @@
       pauseButton.addEventListener("click", togglePause);
 
       duckPanel.addEventListener("click", openDuckDialog);
-      duckSettingsButton.addEventListener("click", openDuckSettings);
-      duckSettingsClose.addEventListener("click", closeDuckSettings);
-      duckSettingsOverlay.addEventListener("click", closeDuckSettings);
+      duckSettingsButton.addEventListener("click", () => duckUiManager.openSettings());
+      duckSettingsClose.addEventListener("click", () => duckUiManager.closeSettings());
+      duckSettingsOverlay.addEventListener("click", () => duckUiManager.closeSettings());
       duckClose.addEventListener("click", closeDuckDialog);
       duckDialog.addEventListener("click", (event) => {
         if (event.target === duckDialog) {
@@ -2171,7 +2292,7 @@
       }
 
       function openDuckDialog() {
-        closeDuckSettings();
+        duckUiManager.closeSettings();
         duckDialog.hidden = false;
         duckInput.value = "";
         duckResponse.textContent = duckDefaultGreeting;
@@ -2183,13 +2304,11 @@
       }
 
       function openDuckSettings() {
-        duckSettingsPanel.classList.add("open");
-        duckSettingsOverlay.classList.add("visible");
+        duckUiManager.openSettings();
       }
 
       function closeDuckSettings() {
-        duckSettingsPanel.classList.remove("open");
-        duckSettingsOverlay.classList.remove("visible");
+        duckUiManager.closeSettings();
       }
 
       function openStatsDialog() {
