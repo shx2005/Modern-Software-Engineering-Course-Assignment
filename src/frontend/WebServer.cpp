@@ -15,6 +15,7 @@
 #include <algorithm>
 #include <array>
 #include <chrono>
+#include <ctime>
 #include <cstdlib>
 #include <cctype>
 #include <cstdint>
@@ -342,7 +343,12 @@ private:
 
     std::vector<Entry> entries;
 };
-}
+}  // anonymous namespace
+
+}  // namespace frontend
+
+using frontend::LayoutManager;
+using frontend::WebServer;
 
 WebServer::WebServer(backend::GameEngine& engine,
                      LayoutManager& layoutManager,
@@ -350,6 +356,9 @@ WebServer::WebServer(backend::GameEngine& engine,
                      int port)
     : m_engine(engine),
       m_layoutManager(layoutManager),
+      m_codeStatsFacade(),
+      m_attendanceRepo(backend::createAttendanceRepository()),
+      m_attendanceCursor(0),
       m_staticDir(std::move(staticDir)),
       m_port(port) {}
 
@@ -656,6 +665,7 @@ std::string WebServer::handleApiRequest(const std::string& method,
                                         std::string& contentType,
                                         int& statusCode) {
     contentType = "application/json";
+    statusCode = 200;
 
     if (method == "POST" && path == "/move") {
         backend::MoveDirection direction = parseDirection(body);
@@ -676,9 +686,7 @@ std::string WebServer::handleApiRequest(const std::string& method,
         oss << R"({"success":)" << ((moved && !timeUp) ? "true" : "false") << ",";
         oss << R"("timeUp":)" << (timeUp ? "true" : "false") << "}";
         return oss.str();
-    }
-
-    if (method == "POST" && path == "/reset") {
+    } else if (method == "POST" && path == "/reset") {
         {
             std::lock_guard<std::mutex> guard(m_engineMutex);
             const auto seed = static_cast<unsigned int>(
@@ -688,9 +696,7 @@ std::string WebServer::handleApiRequest(const std::string& method,
         }
         backend::Logger::instance().log("Reset request completed and engine reseeded.");
         return R"({"success":true})";
-    }
-
-    if (method == "POST" && path == "/rain") {
+    } else if (method == "POST" && path == "/rain") {
         int spawned = 0;
         {
             std::lock_guard<std::mutex> guard(m_engineMutex);
@@ -701,9 +707,7 @@ std::string WebServer::handleApiRequest(const std::string& method,
         std::ostringstream oss;
         oss << R"({"success":true,"spawned":)" << spawned << "}";
         return oss.str();
-    }
-
-    if (method == "POST" && path == "/pause") {
+    } else if (method == "POST" && path == "/pause") {
         const std::string action = parseAction(body);
         bool paused = false;
         {
@@ -722,30 +726,7 @@ std::string WebServer::handleApiRequest(const std::string& method,
         std::ostringstream oss;
         oss << R"({"success":true,"paused":)" << (paused ? "true" : "false") << "}";
         return oss.str();
-    }
-
-    if (method == "POST" && path == "/pause") {
-        const std::string action = parseAction(body);
-        bool paused = false;
-        {
-            std::lock_guard<std::mutex> guard(m_engineMutex);
-            if (action == "pause") {
-                m_engine.pause();
-            } else if (action == "resume") {
-                m_engine.resume();
-            } else {
-                m_engine.togglePause();
-            }
-            paused = m_engine.isPaused();
-        }
-        backend::Logger::instance().log("Pause request '" + action + "' -> " +
-                                        std::string(paused ? "paused" : "running") + ".");
-        std::ostringstream oss;
-        oss << R"({"success":true,"paused":)" << (paused ? "true" : "false") << "}";
-        return oss.str();
-    }
-
-    if (method == "POST" && path == "/codestats") {
+    } else if (method == "POST" && path == "/codestats") {
         const std::string directory = parseDirectory(body);
         const std::string targetDir = directory.empty() ? "." : directory;
         backend::CodeStatsOptions options;
@@ -768,20 +749,8 @@ std::string WebServer::handleApiRequest(const std::string& method,
         }
         backend::Logger::instance().log("Code stats computed for directory '" + targetDir + "'.");
         return buildCodeStatsJson(stats, targetDir, options);
-    }
-
-    if (method == "POST" && path == "/layout") {
-        backend::Logger::instance().log("Layout customization requested.");
-        contentType = "application/json";
-        statusCode = 202;
-        const std::string userId = "default";  // TODO: Extract from payload.
-        (void)body;
-        const std::string serialized = buildLayoutSettingsJson(userId);
-        return R"({"success":false,"message":"Layout manager not yet implemented","settings":")" +
-               serialized + R"("})";
-    }
-
-    if (method == "POST" && (path == "/print_longest_function" || path == "/print_shortest_function")) {
+    } else if (method == "POST" &&
+               (path == "/print_longest_function" || path == "/print_shortest_function")) {
         const std::string directory = parseDirectory(body);
         const std::string targetDir = directory.empty() ? "." : directory;
         backend::CodeStatsOptions options;
@@ -807,15 +776,49 @@ std::string WebServer::handleApiRequest(const std::string& method,
             if (summary.empty()) {
                 return R"({"success":false,"message":"未检测到函数数据，无法打印最长函数"})";
             }
-            backend::Logger::instance().log("Longest function summary delivered for directory '" + targetDir + "'.");
+            backend::Logger::instance().log(
+                "Longest function summary delivered for directory '" + targetDir + "'.");
             return std::string(R"({"success":true,"message":")") + jsonEscape(summary) + "\"}";
         }
         const std::string summary = m_codeStatsFacade.printShortestFunction(stats);
         if (summary.empty()) {
             return R"({"success":false,"message":"未检测到函数数据，无法打印最短函数"})";
         }
-        backend::Logger::instance().log("Shortest function summary delivered for directory '" + targetDir + "'.");
+        backend::Logger::instance().log(
+            "Shortest function summary delivered for directory '" + targetDir + "'.");
         return std::string(R"({"success":true,"message":")") + jsonEscape(summary) + "\"}";
+    } else if (method == "POST" && path == "/layout") {
+        backend::Logger::instance().log("Layout customization requested.");
+        contentType = "application/json";
+        statusCode = 202;
+        const std::string userId = "default";  // TODO: Extract from payload.
+        (void)body;
+        const std::string serialized = buildLayoutSettingsJson(userId);
+        return R"({"success":false,"message":"Layout manager not yet implemented","settings":")" +
+               serialized + R"("})";
+    } else if (method == "GET" && path == "/attendance/next") {
+        contentType = "application/json";
+        if (!m_attendanceRepo) {
+            statusCode = 500;
+            return R"({"success":false,"error":"Attendance repository not configured"})";
+        }
+        const std::vector<backend::Student> students = m_attendanceRepo->listStudents();
+        if (students.empty()) {
+            return R"({"success":true,"empty":true})";
+        }
+        if (m_attendanceCursor >= students.size()) {
+            m_attendanceCursor = 0;
+        }
+        const backend::Student& student = students[m_attendanceCursor++];
+        std::ostringstream oss;
+        oss << R"({"success":true,"student":{)"
+            << R"("id":")" << jsonEscape(student.studentId) << R"(",)"
+            << R"("name":")" << jsonEscape(student.name) << R"("})}";
+        return oss.str();
+    } else if (method == "POST" && path == "/attendance/mark") {
+        contentType = "application/json";
+        statusCode = 501;
+        return R"({"success":false,"error":"Attendance mark not implemented"})";
     }
 
     statusCode = 404;
@@ -1246,5 +1249,3 @@ std::string WebServer::buildXlsxReport(const backend::CodeStatsResult& result) c
 std::string WebServer::buildLayoutSettingsJson(const std::string& userId) {
     return m_layoutManager.exportPreferences(userId);
 }
-
-}  // namespace frontend

@@ -1,32 +1,45 @@
-2025-11-20 17:03:47 | Initializing tank red envelope game.
-2025-11-20 17:03:47 | Engine seeded with value 4186275799.
-2025-11-20 17:03:47 | Resolved HTTP port 8080.
-2025-11-20 17:03:47 | Starting web server event loop.
-2025-11-20 17:03:47 | Web server listening on port 8080.
-2025-11-20 17:03:48 | Request: GET /state
-2025-11-20 17:03:49 | Request: GET /state
-2025-11-20 17:03:50 | Request: GET /state
-2025-11-20 17:03:50 | Request: GET /
-2025-11-20 17:03:50 | Request: GET /static/duck.png
-2025-11-20 17:03:50 | Request: GET /static/hat1.png
-2025-11-20 17:03:50 | Request: GET /static/cloth1.png
-2025-11-20 17:03:50 | Request: GET /static/duck2.jpg
-2025-11-20 17:03:50 | Request: GET /static/hat2.png
-2025-11-20 17:03:50 | Request: GET /static/hat3.png
-2025-11-20 17:03:50 | Request: GET /static/cloth2.png
-2025-11-20 17:03:50 | Request: GET /static/cloth3.png
-2025-11-20 17:03:51 | Request: GET /state
-2025-11-20 17:03:52 | Request: GET /state
-2025-11-20 17:03:52 | Request: POST /reset
-2025-11-20 17:03:52 | Reset request completed and engine reseeded.
-2025-11-20 17:03:52 | Request: GET /state
-2025-11-20 17:03:52 | Request: GET /static/tank.jpg
-2025-11-20 17:03:52 | Request: GET /state
-2025-11-20 17:03:53 | Request: GET /state
-2025-11-20 17:03:53 | Request: GET /state
-2025-11-20 17:03:53 | Request: GET /state
-2025-11-20 17:03:54 | Request: GET /state
-2025-11-20 17:03:54 | Request: GET /state
-2025-11-20 17:03:55 | Request: GET /state
-2025-11-20 17:03:56 | Request: GET /state
-2025-11-20 17:03:57 | Request: GET /state
+2025-11-27 18:15:02 | Initializing tank red envelope game.
+2025-11-27 18:15:02 | Engine seeded with value 3376160403.
+2025-11-27 18:15:02 | Resolved HTTP port 8080.
+2025-11-27 18:15:02 | Starting web server event loop.
+2025-11-27 18:15:02 | Web server listening on port 8080.
+2025-11-27 18:15:06 | Request: GET /
+2025-11-27 18:15:06 | Request: GET /static/duck.png
+2025-11-27 18:15:06 | Request: GET /static/hat1.png
+2025-11-27 18:15:06 | Request: GET /static/cloth1.png
+2025-11-27 18:15:06 | Request: GET /static/duck2.jpg
+2025-11-27 18:15:06 | Request: GET /static/hat2.png
+2025-11-27 18:15:06 | Request: GET /static/hat3.png
+2025-11-27 18:15:06 | Request: GET /static/cloth2.png
+2025-11-27 18:15:06 | Request: GET /static/cloth3.png
+2025-11-27 18:15:07 | Request: GET /favicon.ico
+2025-11-27 18:15:07 | Responded 404 for path /favicon.ico.
+2025-11-27 18:15:08 | Request: POST /reset
+2025-11-27 18:15:08 | Reset request completed and engine reseeded.
+2025-11-27 18:15:08 | Request: GET /state
+2025-11-27 18:15:08 | Request: GET /static/tank.jpg
+2025-11-27 18:15:08 | Request: GET /state
+2025-11-27 18:15:09 | Request: GET /state
+2025-11-27 18:15:09 | Request: GET /state
+2025-11-27 18:15:10 | Request: GET /state
+2025-11-27 18:15:10 | Request: GET /state
+2025-11-27 18:15:11 | Request: GET /state
+2025-11-27 18:15:11 | Request: GET /state
+2025-11-27 18:15:12 | Request: GET /state
+2025-11-27 18:15:12 | Request: GET /state
+2025-11-27 18:15:12 | Request: GET /state
+2025-11-27 18:15:13 | Request: GET /static/duck.png
+2025-11-27 18:15:13 | Request: GET /state
+2025-11-27 18:15:13 | Request: GET /state
+2025-11-27 18:15:14 | Request: GET /state
+2025-11-27 18:15:14 | Request: GET /state
+2025-11-27 18:15:15 | Request: GET /state
+2025-11-27 18:15:15 | Request: GET /state
+2025-11-27 18:15:15 | Request: GET /static/duck2.jpg
+2025-11-27 18:15:16 | Request: GET /state
+2025-11-27 18:15:16 | Request: GET /state
+2025-11-27 18:15:17 | Request: GET /state
+2025-11-27 18:15:17 | Request: GET /state
+2025-11-27 18:15:17 | Request: POST /pause
+2025-11-27 18:15:17 | Pause request 'toggle' -> paused.
+2025-11-27 18:15:17 | Request: GET /state
