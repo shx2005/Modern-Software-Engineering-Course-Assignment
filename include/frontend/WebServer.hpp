@@ -4,9 +4,10 @@
 
 #pragma once
 
-#include "backend/GameEngine.hpp"
 #include "backend/CodeStats.hpp"
 #include "backend/CodeStatsFacade.hpp"
+#include "backend/Attendance.hpp"
+#include "backend/GameEngine.hpp"
 
 #include <mutex>
 #include <string>
@@ -32,6 +33,8 @@ private:
     backend::GameEngine& m_engine;
     LayoutManager& m_layoutManager;
     backend::CodeStatsFacade m_codeStatsFacade;
+    std::unique_ptr<backend::AttendanceRepository> m_attendanceRepo;
+    std::size_t m_attendanceCursor{0};
     std::string m_staticDir;
     int m_port;
     std::mutex m_engineMutex;
@@ -50,6 +53,9 @@ private:
                                  const std::string& body,
                                  std::string& contentType,
                                  int& statusCode);
+    std::string handleAttendanceMark(const std::string& body,
+                                     std::string& contentType,
+                                     int& statusCode);
     std::string buildStateJson();
     std::string loadStaticFile(const std::string& targetPath, std::string& contentType);
     backend::MoveDirection parseDirection(const std::string& payload) const;
