@@ -601,6 +601,12 @@ void WebServer::handleClient(int clientSocket) {
                 {"Content-Disposition", "attachment; filename=\"" + filename + "\""}};
             sendHttpResponse(clientSocket, "HTTP/1.1 200 OK", payload, mime, headers);
             return;
+        } else if (method == "GET" && path == "/attendance/roster") {
+            responseBody = handleApiRequest(method, path, body, contentType, statusCode);
+        } else if (method == "GET" && path == "/attendance/next") {
+            responseBody = handleApiRequest(method, path, body, contentType, statusCode);
+        } else if (method == "POST" && path == "/attendance/mark") {
+            responseBody = handleAttendanceMark(body, contentType, statusCode);
         } else if (method == "POST" && path == "/layout") {
             responseBody = handleApiRequest(method, path, body, contentType, statusCode);
         } else if (method == "POST" && path == "/print_longest_function") {
@@ -796,6 +802,26 @@ std::string WebServer::handleApiRequest(const std::string& method,
         const std::string serialized = buildLayoutSettingsJson(userId);
         return R"({"success":false,"message":"Layout manager not yet implemented","settings":")" +
                serialized + R"("})";
+    } else if (method == "GET" && path == "/attendance/roster") {
+        contentType = "application/json";
+        if (!m_attendanceRepo) {
+            statusCode = 500;
+            return R"({"success":false,"error":"Attendance repository not configured"})";
+        }
+        const std::vector<backend::Student> students = m_attendanceRepo->listStudents();
+        std::ostringstream oss;
+        oss << R"({"success":true,"students":[)";
+        for (std::size_t i = 0; i < students.size(); ++i) {
+            const backend::Student& s = students[i];
+            oss << R"({"id":")" << jsonEscape(s.studentId) << R"(","name":")"
+                << jsonEscape(s.name) << R"("})";
+            if (i + 1 < students.size()) {
+                oss << ",";
+            }
+        }
+        oss << "]}"
+            ;
+        return oss.str();
     } else if (method == "GET" && path == "/attendance/next") {
         contentType = "application/json";
         if (!m_attendanceRepo) {
@@ -811,9 +837,8 @@ std::string WebServer::handleApiRequest(const std::string& method,
         }
         const backend::Student& student = students[m_attendanceCursor++];
         std::ostringstream oss;
-        oss << R"({"success":true,"student":{)"
-            << R"("id":")" << jsonEscape(student.studentId) << R"(",)"
-            << R"("name":")" << jsonEscape(student.name) << R"("})}";
+        oss << R"({"success":true,"student":{"id":")" << jsonEscape(student.studentId)
+            << R"(","name":")" << jsonEscape(student.name) << R"("}})";
         return oss.str();
     } else if (method == "POST" && path == "/attendance/mark") {
         contentType = "application/json";
@@ -938,17 +963,25 @@ std::string WebServer::parseAction(const std::string& payload) const {
 }
 
 std::string WebServer::parseDirectory(const std::string& payload) const {
-    const std::string key = "directory=";
-    const std::size_t pos = payload.find(key);
+    return parseFormValue(payload, "directory");
+}
+
+std::string WebServer::parseFormValue(const std::string& payload,
+                                      const std::string& key) const {
+    if (key.empty()) {
+        return {};
+    }
+    const std::string needle = key + "=";
+    const std::size_t pos = payload.find(needle);
     if (pos == std::string::npos) {
         return {};
     }
-    std::size_t endPos = payload.find('&', pos + key.size());
+    std::size_t endPos = payload.find('&', pos + needle.size());
     std::string raw;
     if (endPos == std::string::npos) {
-        raw = payload.substr(pos + key.size());
+        raw = payload.substr(pos + needle.size());
     } else {
-        raw = payload.substr(pos + key.size(), endPos - (pos + key.size()));
+        raw = payload.substr(pos + needle.size(), endPos - (pos + needle.size()));
     }
     return decodeFormValue(raw);
 }

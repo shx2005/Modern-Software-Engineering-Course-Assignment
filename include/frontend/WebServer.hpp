@@ -48,19 +48,20 @@ private:
     void sendNotFound(int clientSocket);
     void sendBadRequest(int clientSocket, const std::string& message);
     void sendInternalError(int clientSocket, const std::string& message);
+    std::string handleAttendanceMark(const std::string& body,
+                                     std::string& contentType,
+                                     int& statusCode);
     std::string handleApiRequest(const std::string& method,
                                  const std::string& path,
                                  const std::string& body,
                                  std::string& contentType,
                                  int& statusCode);
-    std::string handleAttendanceMark(const std::string& body,
-                                     std::string& contentType,
-                                     int& statusCode);
     std::string buildStateJson();
     std::string loadStaticFile(const std::string& targetPath, std::string& contentType);
     backend::MoveDirection parseDirection(const std::string& payload) const;
     std::string parseAction(const std::string& payload) const;
     std::string parseDirectory(const std::string& payload) const;
+    std::string parseFormValue(const std::string& payload, const std::string& key) const;
     std::unordered_set<std::string> parseLanguages(const std::string& payload) const;
     bool parseBooleanFlag(const std::string& payload, const std::string& key) const;
     std::string parseFormat(const std::string& payload) const;

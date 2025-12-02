@@ -40,22 +40,17 @@ std::string WebServer::handleAttendanceMark(const std::string& body,
         return R"({"success":false,"error":"Attendance repository not configured"})";
     }
 
-    const std::string studentId = parseDirectory(body);  // reuse to parse key=value
+    const std::string studentId = parseFormValue(body, "studentId");
     if (studentId.empty()) {
         statusCode = 400;
         return R"({"success":false,"error":"Missing studentId"})";
     }
 
-    const std::size_t statusPos = body.find("status=");
-    if (statusPos == std::string::npos) {
+    const std::string statusValue = parseFormValue(body, "status");
+    if (statusValue.empty()) {
         statusCode = 400;
         return R"({"success":false,"error":"Missing status"})";
     }
-    std::size_t statusEnd = body.find('&', statusPos + 7);
-    std::string rawStatus =
-        statusEnd == std::string::npos ? body.substr(statusPos + 7)
-                                       : body.substr(statusPos + 7, statusEnd - (statusPos + 7));
-    const std::string statusValue = decodeFormValue(rawStatus);
 
     backend::AttendanceStatus status = backend::AttendanceStatus::Present;
     if (statusValue == "present") {
@@ -70,15 +65,7 @@ std::string WebServer::handleAttendanceMark(const std::string& body,
     }
 
     // Optional date=YYYY-MM-DD, default to today.
-    std::string dateIso;
-    const std::size_t datePos = body.find("date=");
-    if (datePos != std::string::npos) {
-        std::size_t dateEnd = body.find('&', datePos + 5);
-        const std::string rawDate =
-            dateEnd == std::string::npos ? body.substr(datePos + 5)
-                                         : body.substr(datePos + 5, dateEnd - (datePos + 5));
-        dateIso = decodeFormValue(rawDate);
-    }
+    std::string dateIso = parseFormValue(body, "date");
     if (dateIso.empty()) {
         dateIso = todayIsoDate();
     }
