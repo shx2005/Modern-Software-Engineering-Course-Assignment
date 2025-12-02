@@ -603,6 +603,8 @@ void WebServer::handleClient(int clientSocket) {
             return;
         } else if (method == "GET" && path == "/attendance/roster") {
             responseBody = handleApiRequest(method, path, body, contentType, statusCode);
+        } else if (method == "GET" && path == "/attendance/previous") {
+            responseBody = handleApiRequest(method, path, body, contentType, statusCode);
         } else if (method == "GET" && path == "/attendance/next") {
             responseBody = handleApiRequest(method, path, body, contentType, statusCode);
         } else if (method == "POST" && path == "/attendance/mark") {
@@ -821,6 +823,24 @@ std::string WebServer::handleApiRequest(const std::string& method,
         }
         oss << "]}"
             ;
+        return oss.str();
+    } else if (method == "GET" && path == "/attendance/previous") {
+        contentType = "application/json";
+        if (!m_attendanceRepo) {
+            statusCode = 500;
+            return R"({"success":false,"error":"Attendance repository not configured"})";
+        }
+        const std::vector<backend::Student> students = m_attendanceRepo->listStudents();
+        if (students.empty()) {
+            return R"({"success":true,"empty":true})";
+        }
+        if (m_attendanceCursor == 0) {
+            m_attendanceCursor = students.size();
+        }
+        const backend::Student& student = students[--m_attendanceCursor];
+        std::ostringstream oss;
+        oss << R"({"success":true,"student":{"id":")" << jsonEscape(student.studentId)
+            << R"(","name":")" << jsonEscape(student.name) << R"("}})";
         return oss.str();
     } else if (method == "GET" && path == "/attendance/next") {
         contentType = "application/json";

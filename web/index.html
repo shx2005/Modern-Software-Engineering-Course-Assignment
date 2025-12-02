@@ -535,7 +535,13 @@
         color: var(--text-secondary);
       }
 
-      .attendance-next {
+      .attendance-nav {
+        display: flex;
+        gap: 0.75rem;
+        align-items: center;
+      }
+
+      .attendance-nav button {
         --hover-scale: 1;
         --hover-glow: 0;
         border: none;
@@ -544,11 +550,20 @@
         font-size: 0.95rem;
         font-weight: 600;
         color: #0f172a;
-        background: linear-gradient(135deg, #fde047, #fb923c);
         box-shadow: 0 12px 30px rgba(249, 115, 22, 0.35);
         cursor: pointer;
         transition: transform 0.18s ease, box-shadow 0.25s ease;
         transform: perspective(400px) scale(var(--hover-scale));
+      }
+
+      .attendance-nav .attendance-prev {
+        background: linear-gradient(135deg, #c084fc, #a855f7);
+        color: var(--text-primary);
+        box-shadow: 0 12px 30px rgba(168, 85, 247, 0.35);
+      }
+
+      .attendance-nav .attendance-next {
+        background: linear-gradient(135deg, #fde047, #fb923c);
       }
 
       .attendance-actions {
@@ -588,7 +603,7 @@
       }
 
       .attendance-action:disabled,
-      .attendance-next:disabled {
+      .attendance-nav button:disabled {
         opacity: 0.55;
         cursor: not-allowed;
         box-shadow: none;
@@ -1592,7 +1607,10 @@
             <h3 id="attendance-student-name" class="attendance-name">等待抽取</h3>
             <p id="attendance-student-id" class="attendance-id">点击“下一位”抽取队员。</p>
           </div>
-          <button id="attendance-next" type="button" class="attendance-next">下一位</button>
+          <div class="attendance-nav">
+            <button id="attendance-prev" type="button" class="attendance-prev">上一位</button>
+            <button id="attendance-next" type="button" class="attendance-next">下一位</button>
+          </div>
         </div>
         <div class="attendance-controls">
           <button id="attendance-start" type="button" class="attendance-primary">开始点名</button>
@@ -1781,6 +1799,7 @@
 
       const attendanceNameEl = document.getElementById("attendance-student-name");
       const attendanceIdEl = document.getElementById("attendance-student-id");
+      const attendancePrevButton = document.getElementById("attendance-prev");
       const attendanceNextButton = document.getElementById("attendance-next");
       const attendanceStartButton = document.getElementById("attendance-start");
       const attendanceEndButton = document.getElementById("attendance-end");
@@ -2119,6 +2138,8 @@
       let attendanceSessionActive = false;
       let attendanceRoundCompleted = false;
       let attendanceRoster = [];
+      let attendanceHasServedStudent = false;
+      let attendanceSubmissionInProgress = false;
       const attendanceRecords = new Map();
       const attendanceResults = { present: 0, leave: 0, absent: 0 };
 
@@ -2386,6 +2407,7 @@
         attendanceResults.leave = 0;
         attendanceResults.absent = 0;
         attendanceRoundCompleted = false;
+        attendanceHasServedStudent = false;
         if (attendanceSummaryEl) {
           attendanceSummaryEl.hidden = true;
         }
@@ -2417,17 +2439,25 @@
         }
         attendanceActionButtons.forEach((button) => {
           button.disabled =
-            !hasStudent || attendanceBusy || !attendanceSessionActive || attendanceRoundCompleted;
+            !hasStudent || attendanceBusy || !attendanceSessionActive ||
+            attendanceSubmissionInProgress;
         });
         if (attendanceNextButton) {
           attendanceNextButton.disabled =
-            attendanceBusy || !attendanceSessionActive || attendanceRoundCompleted;
+            attendanceBusy || !attendanceSessionActive || attendanceRoundCompleted ||
+            attendanceSubmissionInProgress;
+        }
+        if (attendancePrevButton) {
+          attendancePrevButton.disabled =
+            attendanceBusy || !attendanceSessionActive || !attendanceHasServedStudent ||
+            attendanceSubmissionInProgress;
         }
         if (attendanceStartButton) {
-          attendanceStartButton.disabled = attendanceSessionActive || attendanceRoster.length === 0;
+          attendanceStartButton.disabled =
+            attendanceSessionActive || attendanceRoster.length === 0 || attendanceSubmissionInProgress;
         }
         if (attendanceEndButton) {
-          attendanceEndButton.disabled = !attendanceSessionActive;
+          attendanceEndButton.disabled = !attendanceSessionActive || attendanceSubmissionInProgress;
         }
       }
 
@@ -2537,17 +2567,54 @@
         renderAttendanceChart();
       }
 
+      async function submitAttendanceRecords() {
+        const entries = Array.from(attendanceRecords.entries());
+        if (entries.length === 0) {
+          return;
+        }
+        for (const [studentId, status] of entries) {
+          const params = new URLSearchParams();
+          params.set("studentId", studentId);
+          params.set("status", status);
+          const response = await fetch("/attendance/mark", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: params.toString(),
+          });
+          if (!response.ok) {
+            let message = "提交点名数据失败";
+            try {
+              const errorBody = await response.json();
+              if (errorBody && errorBody.error) {
+                message = errorBody.error;
+              }
+            } catch {
+              const fallback = await response.text();
+              if (fallback) {
+                message = fallback;
+              }
+            }
+            throw new Error(message);
+          }
+          const result = await response.json();
+          if (!result.success) {
+            throw new Error(result.error || "提交点名数据失败");
+          }
+        }
+      }
+
       function completeAttendanceRound() {
         attendanceRoundCompleted = true;
-        attendanceSessionActive = false;
         if (attendanceSummaryEl) {
           attendanceSummaryEl.hidden = false;
         }
         const total = attendanceRecords.size;
         setAttendanceSummaryMessage(
-          total > 0 ? `本轮共点名 ${total} 人，统计如下。` : "本轮未记录任何点名结果。",
+          total > 0
+            ? `本轮共点名 ${total} 人，可使用“上一位”检查并点击“结束本轮”提交。`
+            : "本轮未记录任何点名结果。",
         );
-        setAttendanceMessage("本轮点名完成，可以结束或重新开始。", "success");
+        setAttendanceMessage("本轮点名完成，请确认后点击“结束本轮”提交。", "success");
         updateAttendanceControls();
       }
 
@@ -2560,22 +2627,46 @@
         resetAttendanceData();
         updateAttendanceStudent(null);
         setAttendanceMessage("点名已开始，点击“下一位”抽取学员。", "info");
+        attendanceHasServedStudent = false;
         updateAttendanceControls();
         fetchNextAttendanceStudent();
       }
 
-      function endAttendanceSession() {
+      async function endAttendanceSession() {
+        if (attendanceSubmissionInProgress) {
+          setAttendanceMessage("正在提交，请稍候...", "info");
+          return;
+        }
         if (!attendanceSessionActive && attendanceRecords.size === 0) {
           setAttendanceMessage("本轮尚未开始，无需结束。", "info");
           return;
         }
-        attendanceSessionActive = false;
-        attendanceRoundCompleted = true;
-        if (attendanceSummaryEl) {
-          attendanceSummaryEl.hidden = false;
+        if (attendanceRecords.size === 0) {
+          setAttendanceMessage("还没有记录任何学员，请先点名后再提交。", "error");
+          return;
         }
-        setAttendanceSummaryMessage("本轮已结束，以下是出勤统计。");
-        renderAttendanceChart();
+        attendanceSubmissionInProgress = true;
+        updateAttendanceControls();
+        setAttendanceMessage("正在提交本轮点名结果...", "info");
+        try {
+          await submitAttendanceRecords();
+          attendanceSessionActive = false;
+          attendanceRoundCompleted = true;
+          attendanceHasServedStudent = false;
+          if (attendanceSummaryEl) {
+            attendanceSummaryEl.hidden = false;
+          }
+          setAttendanceSummaryMessage("本轮已结束，结果已提交。");
+          renderAttendanceChart();
+          setAttendanceMessage("本轮考勤已提交。", "success");
+        } catch (error) {
+          console.error(error);
+          setAttendanceMessage(error.message || "提交失败，请稍后重试。", "error");
+          attendanceSubmissionInProgress = false;
+          updateAttendanceControls();
+          return;
+        }
+        attendanceSubmissionInProgress = false;
         updateAttendanceControls();
       }
 
@@ -2607,9 +2698,57 @@
           updateAttendanceStudent(data.student);
           const label = data.student?.name || data.student?.id || "该学员";
           setAttendanceMessage(`请记录 ${label} 的状态。`, "info");
+          attendanceHasServedStudent = true;
         } catch (error) {
           console.error(error);
           setAttendanceMessage("获取下一位队员失败，请稍后重试。", "error");
+        } finally {
+          attendanceBusy = false;
+          updateAttendanceControls();
+        }
+      }
+
+      async function fetchPreviousAttendanceStudent() {
+        if (!attendancePrevButton || attendanceBusy) {
+          return;
+        }
+        if (!attendanceSessionActive) {
+          setAttendanceMessage("请先点击“开始点名”。", "error");
+          return;
+        }
+        if (!attendanceHasServedStudent) {
+          setAttendanceMessage("还没有点过名，无法回退。", "error");
+          return;
+        }
+        attendanceBusy = true;
+        updateAttendanceControls();
+        setAttendanceMessage("回退上一位队员...", "info");
+        try {
+          const response = await fetch("/attendance/previous");
+          if (!response.ok) {
+            throw new Error("attendance previous failed");
+          }
+          const data = await response.json();
+          if (!data.success) {
+            throw new Error(data.error || "无法回退上一位队员");
+          }
+          if (data.empty) {
+            setAttendanceMessage("名单为空，无法回退。", "info");
+            return;
+          }
+          updateAttendanceStudent(data.student);
+          attendanceHasServedStudent = true;
+          const label = data.student?.name || data.student?.id || "该学员";
+          const recordedStatus = attendanceRecords.get(data.student?.id ?? "");
+          if (recordedStatus) {
+            const recordedLabel = getAttendanceStatusLabel(recordedStatus);
+            setAttendanceMessage(`回到 ${label}（当前记录：${recordedLabel}），可重新标记。`, "info");
+          } else {
+            setAttendanceMessage(`回到 ${label}，可重新标记。`, "info");
+          }
+        } catch (error) {
+          console.error(error);
+          setAttendanceMessage("获取上一位队员失败，请稍后重试。", "error");
         } finally {
           attendanceBusy = false;
           updateAttendanceControls();
@@ -2620,58 +2759,27 @@
         if (!attendanceCurrentStudent || attendanceBusy) {
           return;
         }
+        if (!attendanceSessionActive) {
+          setAttendanceMessage("请先点击“开始点名”。", "error");
+          return;
+        }
         attendanceBusy = true;
         updateAttendanceControls();
         const label =
           attendanceCurrentStudent.name || attendanceCurrentStudent.id || "该学员";
-        setAttendanceMessage(`正在记录 ${label} 的状态...`, "info");
-        try {
-          const params = new URLSearchParams();
-          params.set("studentId", attendanceCurrentStudent.id ?? "");
-          params.set("status", status);
-          const response = await fetch("/attendance/mark", {
-            method: "POST",
-            headers: { "Content-Type": "application/x-www-form-urlencoded" },
-            body: params.toString(),
-          });
-          if (!response.ok) {
-            let message = "点名失败";
-            try {
-              const errorBody = await response.json();
-              if (errorBody && errorBody.error) {
-                message = errorBody.error;
-              }
-            } catch {
-              const fallback = await response.text();
-              if (fallback) {
-                message = fallback;
-              }
-            }
-            throw new Error(message);
-          }
-          const result = await response.json();
-          if (!result.success) {
-            throw new Error(result.error || "点名失败");
-          }
-          const statusLabel = getAttendanceStatusLabel(status);
-          setAttendanceMessage(`${label} 已标记为${statusLabel}。`, "success");
-          recordAttendanceResult(attendanceCurrentStudent.id, status);
-          if (
-            attendanceRoster.length > 0 &&
-            attendanceRecords.size >= attendanceRoster.length &&
-            !attendanceRoundCompleted
-          ) {
-            completeAttendanceRound();
-          }
-        } catch (error) {
-          console.error(error);
-          setAttendanceMessage(error.message || "点名失败，请稍后再试。", "error");
-          attendanceBusy = false;
-          updateAttendanceControls();
-          return;
-        }
+        const statusLabel = getAttendanceStatusLabel(status);
+        recordAttendanceResult(attendanceCurrentStudent.id, status);
+        setAttendanceMessage(`${label} 已标记为${statusLabel}（提交前可随时修改）。`, "success");
         attendanceBusy = false;
         updateAttendanceControls();
+        if (
+          attendanceRoster.length > 0 &&
+          attendanceRecords.size >= attendanceRoster.length &&
+          !attendanceRoundCompleted
+        ) {
+          completeAttendanceRound();
+          return;
+        }
         if (!attendanceRoundCompleted) {
           await fetchNextAttendanceStudent();
         }
@@ -2683,7 +2791,7 @@
 
       const interactiveButtons = Array.from(
         document.querySelectorAll(
-          ".action-button, .attendance-action, .attendance-next, .attendance-primary, .attendance-secondary",
+          ".action-button, .attendance-action, .attendance-prev, .attendance-next, .attendance-primary, .attendance-secondary",
         ),
       );
       let pointerX = 0;
@@ -2814,6 +2922,9 @@
       }
       if (attendanceEndButton) {
         attendanceEndButton.addEventListener("click", () => endAttendanceSession());
+      }
+      if (attendancePrevButton) {
+        attendancePrevButton.addEventListener("click", () => fetchPreviousAttendanceStudent());
       }
       if (attendanceNextButton) {
         attendanceNextButton.addEventListener("click", () => fetchNextAttendanceStudent());
