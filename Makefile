@@ -3,6 +3,32 @@
 
 CXX := clang++
 CXXFLAGS := -std=c++17 -Wall -Wextra -Wpedantic -Iinclude
+LDLIBS :=
+
+# Attendance feature: build with MySQL client by default (no in-memory fallback).
+WITH_MYSQL ?= 1
+MYSQL_CONFIG ?= mysql_config
+
+ifeq ($(WITH_MYSQL),1)
+MYSQL_CFLAGS := $(shell $(MYSQL_CONFIG) --cflags 2>/dev/null)
+MYSQL_LIBS := $(shell $(MYSQL_CONFIG) --libs 2>/dev/null)
+ifeq ($(strip $(MYSQL_LIBS)),)
+MYSQL_CFLAGS := $(shell pkg-config --cflags mysqlclient 2>/dev/null)
+MYSQL_LIBS := $(shell pkg-config --libs mysqlclient 2>/dev/null)
+endif
+ifeq ($(strip $(MYSQL_LIBS)),)
+$(error MySQL client dev libs not found. Install MySQL/MariaDB client dev package (mysql_config or pkg-config mysqlclient), or build with WITH_MYSQL=0)
+endif
+# Homebrew on macOS often keeps dependencies (e.g. zstd/ssl) in a shared lib dir.
+ifneq ($(wildcard /opt/homebrew/lib),)
+MYSQL_LIBS := -L/opt/homebrew/lib $(MYSQL_LIBS)
+endif
+ifneq ($(wildcard /usr/local/lib),)
+MYSQL_LIBS := -L/usr/local/lib $(MYSQL_LIBS)
+endif
+CXXFLAGS += -DHAVE_MYSQL $(MYSQL_CFLAGS)
+LDLIBS += $(MYSQL_LIBS)
+endif
 
 BACKEND_SRCS := $(wildcard src/backend/*.cpp)
 FRONTEND_SRCS := $(wildcard src/frontend/*.cpp)
@@ -30,14 +56,14 @@ all: $(TARGET)
 
 $(TARGET): $(OBJS)
 	@mkdir -p $(dir $@)
-	$(CXX) $(CXXFLAGS) $^ -o $@
+	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDLIBS)
 
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 db-init:
 	@echo "Initializing MySQL attendance schema in database '$(DB_NAME)'..."
-	@mysql $(DB_FLAGS) < sql/attendance_init.sql
+	@sed 's/`attendance_db`/`$(DB_NAME)`/g' sql/attendance_init.sql | mysql $(DB_FLAGS)
 
 run: $(TARGET)
 	@$(MAKE) db-init

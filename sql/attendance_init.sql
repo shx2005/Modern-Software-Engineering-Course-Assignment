@@ -1,11 +1,11 @@
 -- File: sql/attendance_init.sql
 -- Description: Initialize MySQL schema and seed data for attendance feature.
 
-CREATE DATABASE IF NOT EXISTS attendance_db
+CREATE DATABASE IF NOT EXISTS `attendance_db`
   CHARACTER SET utf8mb4
   COLLATE utf8mb4_unicode_ci;
 
-USE attendance_db;
+USE `attendance_db`;
 
 CREATE TABLE IF NOT EXISTS students (
   student_id VARCHAR(32) PRIMARY KEY,
@@ -24,4 +24,3 @@ CREATE TABLE IF NOT EXISTS attendance (
 INSERT IGNORE INTO students (student_id, name) VALUES
   ('2023xxxxxxxx1', 'xxx1'),
   ('2023xxxxxxxx2', 'xxx2');
-

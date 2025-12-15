@@ -3,3 +3,5 @@ bin/*
 testcase/*
 testcase5/*
 *.pdf
+*.doc
+*.docx

@@ -6,16 +6,37 @@
 //              connection details in createAttendanceRepository().
 
 #include "backend/Attendance.hpp"
+#include "backend/Logger.hpp"
 
 #include <algorithm>
 #include <chrono>
 #include <cstdlib>
+#include <iostream>
 #include <mutex>
 #include <sstream>
 #include <stdexcept>
 
 #if defined(HAVE_MYSQL)
+#if __has_include(<mysql/mysql.h>)
 #include <mysql/mysql.h>
+#elif __has_include(<mysql.h>)
+#include <mysql.h>
+#else
+#error "HAVE_MYSQL is defined but MySQL headers are not available."
+#endif
+
+#if __has_include(<mysql/errmsg.h>)
+#include <mysql/errmsg.h>
+#elif __has_include(<errmsg.h>)
+#include <errmsg.h>
+#endif
+
+#ifndef CR_SERVER_GONE_ERROR
+#define CR_SERVER_GONE_ERROR 2006
+#endif
+#ifndef CR_SERVER_LOST
+#define CR_SERVER_LOST 2013
+#endif
 #endif
 
 namespace backend {
@@ -97,6 +118,14 @@ public:
         const char* host = std::getenv("ATTENDANCE_DB_HOST");
         const char* user = std::getenv("ATTENDANCE_DB_USER");
         const char* password = std::getenv("ATTENDANCE_DB_PASSWORD");
+        if (!password) {
+            // Common MySQL env var names used by CLI/tools.
+            password = std::getenv("MYSQL_PWD");
+        }
+        if (!password) {
+            // Align with Makefile variable naming for convenience.
+            password = std::getenv("DB_PASSWORD");
+        }
         const char* db = std::getenv("ATTENDANCE_DB_NAME");
         const char* portStr = std::getenv("ATTENDANCE_DB_PORT");
 
@@ -124,6 +153,9 @@ public:
         if (!mysql_real_connect(m_conn, host, user, password, db, port, nullptr, 0)) {
             std::string message = "Failed to connect MySQL: ";
             message += mysql_error(m_conn);
+            if (std::string(message).find("Access denied") != std::string::npos) {
+                message += " (Hint: set ATTENDANCE_DB_PASSWORD / MYSQL_PWD env var)";
+            }
             mysql_close(m_conn);
             m_conn = nullptr;
             throw std::runtime_error(message);
@@ -140,17 +172,17 @@ public:
     std::vector<Student> listStudents() override {
         std::lock_guard<std::mutex> lock(m_mutex);
         std::vector<Student> result;
-        if (!m_conn) {
-            return result;
-        }
+        ensureConnectedOrQuit("listStudents");
 
         const char* query = "SELECT student_id, name FROM students ORDER BY student_id";
         if (mysql_query(m_conn, query) != 0) {
+            handleDbErrorOrQuit("listStudents mysql_query");
             return result;
         }
 
         MYSQL_RES* res = mysql_store_result(m_conn);
         if (!res) {
+            handleDbErrorOrQuit("listStudents mysql_store_result");
             return result;
         }
 
@@ -171,20 +203,20 @@ public:
 
     std::optional<Student> findStudentById(const std::string& studentId) override {
         std::lock_guard<std::mutex> lock(m_mutex);
-        if (!m_conn) {
-            return std::nullopt;
-        }
+        ensureConnectedOrQuit("findStudentById");
 
         std::string query = "SELECT student_id, name FROM students WHERE student_id = '";
         query += escape(studentId);
         query += "' LIMIT 1";
 
         if (mysql_query(m_conn, query.c_str()) != 0) {
+            handleDbErrorOrQuit("findStudentById mysql_query");
             return std::nullopt;
         }
 
         MYSQL_RES* res = mysql_store_result(m_conn);
         if (!res) {
+            handleDbErrorOrQuit("findStudentById mysql_store_result");
             return std::nullopt;
         }
 
@@ -207,24 +239,55 @@ public:
 
     bool markAttendance(const AttendanceRecord& record) override {
         std::lock_guard<std::mutex> lock(m_mutex);
-        if (!m_conn) {
-            return false;
-        }
+        ensureConnectedOrQuit("markAttendance");
 
         std::ostringstream oss;
-        oss << "INSERT INTO attendance(student_id, date, status) VALUES('"
+        oss << "INSERT INTO attendance(student_id, `date`, status) VALUES('"
             << escape(record.studentId) << "','"
             << escape(record.dateIso) << "','"
             << escape(statusToString(record.status)) << "')";
 
         const std::string sql = oss.str();
         if (mysql_query(m_conn, sql.c_str()) != 0) {
+            handleDbErrorOrQuit("markAttendance mysql_query");
             return false;
         }
         return true;
     }
 
 private:
+    void ensureConnectedOrQuit(const char* action) {
+        if (m_conn) {
+            return;
+        }
+        quitNow(std::string("MySQL connection missing during ") + action + ".");
+    }
+
+    static bool isDisconnectError(unsigned int err) {
+        return err == CR_SERVER_GONE_ERROR || err == CR_SERVER_LOST || err == 2006U || err == 2013U;
+    }
+
+    void handleDbErrorOrQuit(const char* action) {
+        if (!m_conn) {
+            quitNow(std::string("MySQL connection missing during ") + action + ".");
+        }
+        const unsigned int err = mysql_errno(m_conn);
+        if (isDisconnectError(err)) {
+            std::string message = "MySQL disconnected during ";
+            message += action;
+            message += ": ";
+            message += mysql_error(m_conn);
+            quitNow(message);
+        }
+    }
+
+    [[noreturn]] static void quitNow(const std::string& message) {
+        backend::Logger::instance().log(std::string("FATAL: ") + message);
+        std::cerr << "FATAL: " << message << "\n";
+        std::cerr.flush();
+        std::quick_exit(EXIT_FAILURE);
+    }
+
     std::string escape(const std::string& value) {
         if (!m_conn) {
             return value;
@@ -253,8 +316,10 @@ std::unique_ptr<AttendanceRepository> createAttendanceRepository() {
     // 由上层统一处理，而不再静默回退到内存实现。
     return std::make_unique<MySqlAttendanceRepository>();
 #else
-    // 未启用 MySQL 支持时，使用内存实现，便于开发与测试。
-    return std::make_unique<InMemoryAttendanceRepository>();
+    // 点名功能不允许静默回退到内存实现：若未启用 MySQL，直接失败退出（由上层终止进程）。
+    throw std::runtime_error(
+        "Attendance requires a database, but this build is missing MySQL support. "
+        "Rebuild with WITH_MYSQL=1 (or define HAVE_MYSQL and link mysqlclient).");
 #endif
 }
 

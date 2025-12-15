@@ -67,11 +67,10 @@ int main(int argc, char* argv[]) {
 
     const int port = resolvePort(argc, argv);
     backend::Logger::instance().log("Resolved HTTP port " + std::to_string(port) + ".");
-    frontend::LayoutManager layoutManager;
-    layoutManager.initialize();
-    frontend::WebServer server(engine, layoutManager, "web", port);
-
     try {
+        frontend::LayoutManager layoutManager;
+        layoutManager.initialize();
+        frontend::WebServer server(engine, layoutManager, "web", port);
         backend::Logger::instance().log("Starting web server event loop.");
         server.run();
     } catch (const std::exception& ex) {

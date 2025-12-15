@@ -32,10 +32,9 @@ public:
     virtual bool markAttendance(const AttendanceRecord& record) = 0;
 };
 
-// Factory used by WebServer. In the default build this returns an
-// in-memory repository; if HAVE_MYSQL is defined and the runtime
-// environment is configured correctly, it can be wired to MySQL.
+// Factory used by WebServer. In a MySQL-enabled build (HAVE_MYSQL),
+// attendance data is persisted in MySQL; if MySQL support is missing,
+// the factory will fail fast instead of silently falling back to memory.
 std::unique_ptr<AttendanceRepository> createAttendanceRepository();
 
 }  // namespace backend
-

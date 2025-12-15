@@ -64,7 +64,7 @@ http://localhost:8080
 - `ATTENDANCE_DB_HOST`：主机名，默认 `localhost`
 - `ATTENDANCE_DB_PORT`：端口，默认 `3306`
 - `ATTENDANCE_DB_USER`：用户名，默认 `root`
-- `ATTENDANCE_DB_PASSWORD`：密码，默认空字符串
+- `ATTENDANCE_DB_PASSWORD`：密码（强烈建议设置；未设置时默认为空字符串）
 - `ATTENDANCE_DB_NAME`：数据库名，默认 `attendance_db`
 
 示例：
@@ -77,5 +77,12 @@ export ATTENDANCE_DB_PASSWORD=你的密码
 export ATTENDANCE_DB_NAME=attendance_db
 ```
 
-> 提示：当前代码在未定义 `HAVE_MYSQL` 时仍使用内存实现，方便开发调试；在你正确安装并链接 MySQL 开发库后，可以在编译选项中加上 `-DHAVE_MYSQL` 与 `-lmysqlclient` 以启用真正的 MySQL 持久化。
+如果你看到类似报错：
 
+```text
+Access denied for user 'root'@'localhost' (using password: NO)
+```
+
+说明运行时没有读到密码环境变量。请设置 `ATTENDANCE_DB_PASSWORD`（或兼容变量 `MYSQL_PWD` / `DB_PASSWORD`）后再启动服务。
+
+> 提示：Makefile 默认启用 MySQL（`WITH_MYSQL=1`）且不会回退到内存实现；若本机缺少 MySQL client 开发库，会在编译阶段直接报错。需要临时跳过 MySQL 编译可使用 `make WITH_MYSQL=0`（点名功能将不可用）。
