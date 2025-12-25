@@ -3430,8 +3430,10 @@
       }
 
       const duckAiDefaults = {
-        endpoint: "https://api.openai.com/v1/chat/completions",
-        model: "gpt-4o-mini",
+        // 阿里云百炼（DashScope）OpenAI 兼容模式：Chat Completions
+        endpoint: "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions",
+        // 可通过 window.DUCK_OPENAI_MODEL 覆盖（如 qwen-plus / qwen3-* 等）
+        model: "qwen-plus",
         systemPrompt: "你是飞行助手小鸭，请用亲切的语气回复玩家，保持回答精炼。",
         temperature: 0.7,
       };
@@ -3450,9 +3452,6 @@
 
         const config = window.DUCK_OPENAI_CONFIG || {};
         const apiKey = window.DUCK_OPENAI_KEY || config.apiKey;
-        if (!apiKey) {
-          return "";
-        }
         const endpoint = config.endpoint || window.DUCK_OPENAI_ENDPOINT || duckAiDefaults.endpoint;
         const model = config.model || window.DUCK_OPENAI_MODEL || duckAiDefaults.model;
         const temperature =
@@ -3473,23 +3472,29 @@
         };
 
         try {
-          const response = await fetch(endpoint, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${apiKey}`,
-            },
-            body: JSON.stringify(payload),
-          });
+          const response = apiKey
+            ? await fetch(endpoint, {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${apiKey}`,
+                },
+                body: JSON.stringify(payload),
+              })
+            : await fetch("/duckai", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ model, systemPrompt, message }),
+              });
           if (!response.ok) {
-            console.error("OpenAI response error", await response.text());
+            console.error("Duck AI response error", await response.text());
             return "";
           }
           const data = await response.json();
           const text = data?.choices?.[0]?.message?.content;
           return text ? text.trim() : "";
         } catch (error) {
-          console.error("调用 OpenAI 接口失败", error);
+          console.error("调用 Duck AI 接口失败", error);
           return "";
         }
       }
@@ -3513,8 +3518,14 @@
         } else {
           duckResponse.textContent = "正在为你连接机载 AI...";
           const aiReply = await invokeDuckAI(command);
-          duckResponse.textContent =
-            aiReply && aiReply.length > 0 ? aiReply : "AI 接口尚未接入，持续升级中！";
+          if (aiReply && aiReply.length > 0) {
+            duckResponse.textContent = aiReply;
+          } else {
+            // Avoid flashing the fallback while the AI response is still in-flight.
+            duckResponse.textContent = "AI 正在思考，请稍等...";
+            await delay(1500);
+            duckResponse.textContent = "AI 接口尚未接入，持续升级中！";
+          }
         }
       }
 

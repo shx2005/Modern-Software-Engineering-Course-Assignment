@@ -73,7 +73,7 @@
 - 识别“红包雨”命令，直接触发后端 `/rain`。
 - 其他内容调用 `invokeDuckAI()`：
   - 优先执行 `window.duckAiHandler`（
-  - 若未提供，则读取 `window.DUCK_OPENAI_*` 配置，按 OpenAI Chat Completions（`model`, `messages`, `temperature`）格式请求官方 API。
+  - 若未提供，则默认调用后端 `/duckai` 代理（后端读取服务器环境变量 `OPENAI_API_KEY`，并按 OpenAI Chat Completions 格式转发到阿里云百炼 DashScope 兼容模式）。
 
 #### 2.4.2 界面截图及说明
 - 对话框位于页面中央弹窗，含输入框、发送按钮、关闭按钮。
@@ -81,5 +81,7 @@
 
 #### 2.4.3 代码结构及说明
 - 前端：`openDuckDialog`, `submitDuckCommand`, `invokeDuckAI`（`web/index.html`）。
-- 后端：`/rain` 处理逻辑在 `src/frontend/WebServer.cpp` 中的 `handleApiRequest`。
-- 配置：可在浏览器环境注入 `window.DUCK_OPENAI_CONFIG = { apiKey, model, endpoint }`。
+- 后端：`/rain`、`/duckai` 等 API 处理逻辑在 `src/frontend/WebServer.cpp` 中的 `handleApiRequest`。
+- 配置：
+  - 推荐：在运行服务前设置环境变量 `OPENAI_API_KEY`（填 DashScope API Key），前端将走 `/duckai` 代理。
+  - 可选：在浏览器环境注入 `window.DUCK_OPENAI_CONFIG = { apiKey, model, endpoint }`，使前端直接调用 OpenAI 兼容接口（如 `https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions`，`model` 可填 `qwen-plus` / `qwen3-*`）。

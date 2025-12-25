@@ -3,7 +3,25 @@
 
 CXX := clang++
 CXXFLAGS := -std=c++17 -Wall -Wextra -Wpedantic -Iinclude
-LDLIBS :=
+LDLIBS := -lcurl
+
+.DEFAULT_GOAL := all
+
+# Rebuild objects when feature flags change (e.g. WITH_MYSQL).
+BUILD_DIR := build
+CONFIG_STAMP := $(BUILD_DIR)/config.$(WITH_MYSQL).stamp
+
+$(CONFIG_STAMP): FORCE
+	@mkdir -p $(BUILD_DIR)
+	@echo 'CXXFLAGS=$(CXXFLAGS)' > $(CONFIG_STAMP).tmp
+	@echo 'LDLIBS=$(LDLIBS)' >> $(CONFIG_STAMP).tmp
+	@if [ ! -f $(CONFIG_STAMP) ] || ! cmp -s $(CONFIG_STAMP) $(CONFIG_STAMP).tmp; then \
+		mv $(CONFIG_STAMP).tmp $(CONFIG_STAMP); \
+	else \
+		rm -f $(CONFIG_STAMP).tmp; \
+	fi
+
+FORCE:
 
 # Attendance feature: build with MySQL client by default (no in-memory fallback).
 WITH_MYSQL ?= 1
@@ -60,6 +78,8 @@ $(TARGET): $(OBJS)
 
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+$(OBJS): $(CONFIG_STAMP)
 
 db-init:
 	@echo "Initializing MySQL attendance schema in database '$(DB_NAME)'..."

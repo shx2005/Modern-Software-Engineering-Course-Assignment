@@ -8,6 +8,7 @@
 #include "frontend/LayoutManager.hpp"
 
 #include <arpa/inet.h>
+#include <curl/curl.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <unistd.h>
@@ -28,6 +29,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <thread>
+#include <utility>
 #include <vector>
 #include <unordered_set>
 
@@ -35,6 +37,133 @@ namespace frontend {
 
 namespace {
 constexpr std::size_t kReadBufferSize = 4096;
+
+std::string normalizePath(std::string path) {
+    const std::size_t queryPos = path.find('?');
+    if (queryPos != std::string::npos) {
+        path.resize(queryPos);
+    }
+    while (path.size() > 1 && path.back() == '/') {
+        path.pop_back();
+    }
+    return path;
+}
+
+void ensureCurlInitialized() {
+    static std::once_flag flag;
+    std::call_once(flag, []() { curl_global_init(CURL_GLOBAL_DEFAULT); });
+}
+
+std::string extractJsonStringField(const std::string& body, const std::string& key) {
+    const std::string quotedKey = "\"" + key + "\"";
+    std::size_t pos = body.find(quotedKey);
+    if (pos == std::string::npos) {
+        return "";
+    }
+    pos = body.find(':', pos + quotedKey.size());
+    if (pos == std::string::npos) {
+        return "";
+    }
+    ++pos;
+    while (pos < body.size() && std::isspace(static_cast<unsigned char>(body[pos]))) {
+        ++pos;
+    }
+    if (pos >= body.size() || body[pos] != '"') {
+        return "";
+    }
+    ++pos;
+    std::string output;
+    output.reserve(256);
+    while (pos < body.size()) {
+        const char ch = body[pos++];
+        if (ch == '"') {
+            return output;
+        }
+        if (ch != '\\') {
+            output.push_back(ch);
+            continue;
+        }
+        if (pos >= body.size()) {
+            return "";
+        }
+        const char esc = body[pos++];
+        switch (esc) {
+            case '"':
+            case '\\':
+            case '/':
+                output.push_back(esc);
+                break;
+            case 'b':
+                output.push_back('\b');
+                break;
+            case 'f':
+                output.push_back('\f');
+                break;
+            case 'n':
+                output.push_back('\n');
+                break;
+            case 'r':
+                output.push_back('\r');
+                break;
+            case 't':
+                output.push_back('\t');
+                break;
+            case 'u': {
+                // Best-effort: keep the escape sequence if parsing fails.
+                if (pos + 4 > body.size()) {
+                    output += "\\u";
+                    break;
+                }
+                const std::string hex = body.substr(pos, 4);
+                pos += 4;
+                char* endPtr = nullptr;
+                const long code = std::strtol(hex.c_str(), &endPtr, 16);
+                if (!endPtr || *endPtr != '\0' || code < 0 || code > 0x10FFFF) {
+                    output += "\\u" + hex;
+                    break;
+                }
+                const uint32_t u = static_cast<uint32_t>(code);
+                if (u <= 0x7F) {
+                    output.push_back(static_cast<char>(u));
+                } else if (u <= 0x7FF) {
+                    output.push_back(static_cast<char>(0xC0 | (u >> 6)));
+                    output.push_back(static_cast<char>(0x80 | (u & 0x3F)));
+                } else if (u <= 0xFFFF) {
+                    output.push_back(static_cast<char>(0xE0 | (u >> 12)));
+                    output.push_back(static_cast<char>(0x80 | ((u >> 6) & 0x3F)));
+                    output.push_back(static_cast<char>(0x80 | (u & 0x3F)));
+                } else {
+                    output.push_back(static_cast<char>(0xF0 | (u >> 18)));
+                    output.push_back(static_cast<char>(0x80 | ((u >> 12) & 0x3F)));
+                    output.push_back(static_cast<char>(0x80 | ((u >> 6) & 0x3F)));
+                    output.push_back(static_cast<char>(0x80 | (u & 0x3F)));
+                }
+                break;
+            }
+            default:
+                output.push_back(esc);
+                break;
+        }
+    }
+    return "";
+}
+
+std::size_t curlWriteToString(char* ptr, std::size_t size, std::size_t nmemb, void* userdata) {
+    if (!userdata) {
+        return 0;
+    }
+    auto* out = static_cast<std::string*>(userdata);
+    out->append(ptr, size * nmemb);
+    return size * nmemb;
+}
+
+struct CurlSlistDeleter {
+    void operator()(curl_slist* list) const noexcept {
+        if (list) {
+            curl_slist_free_all(list);
+        }
+    }
+};
 
 std::string jsonEscape(const std::string& input) {
     std::string output;
@@ -474,6 +603,7 @@ void WebServer::handleClient(int clientSocket) {
         sendBadRequest(clientSocket, "Missing method or path.");
         return;
     }
+    const std::string routingPath = normalizePath(path);
 
     std::string line;
     std::size_t contentLength = 0;
@@ -517,13 +647,13 @@ void WebServer::handleClient(int clientSocket) {
     backend::Logger::instance().log("Request: " + method + " " + path);
 
     try {
-        if (method == "GET" && (path == "/" || path == "/index.html")) {
+        if (method == "GET" && (routingPath == "/" || routingPath == "/index.html")) {
             responseBody = loadStaticFile("index.html", contentType);
-        } else if (method == "GET" && path == "/state") {
+        } else if (method == "GET" && routingPath == "/state") {
             responseBody = buildStateJson();
             contentType = "application/json";
-        } else if (method == "GET" && path.rfind("/static/", 0) == 0) {
-            const std::string relativePath = path.substr(1);  // remove leading slash
+        } else if (method == "GET" && routingPath.rfind("/static/", 0) == 0) {
+            const std::string relativePath = routingPath.substr(1);  // remove leading slash
             try {
                 responseBody = loadStaticFile(relativePath, contentType);
             } catch (const std::exception& ex) {
@@ -532,17 +662,19 @@ void WebServer::handleClient(int clientSocket) {
                 sendNotFound(clientSocket);
                 return;
             }
-        } else if (method == "POST" && path == "/move") {
-            responseBody = handleApiRequest(method, path, body, contentType, statusCode);
-        } else if (method == "POST" && path == "/reset") {
-            responseBody = handleApiRequest(method, path, body, contentType, statusCode);
-        } else if (method == "POST" && path == "/rain") {
-            responseBody = handleApiRequest(method, path, body, contentType, statusCode);
-        } else if (method == "POST" && path == "/pause") {
-            responseBody = handleApiRequest(method, path, body, contentType, statusCode);
-        } else if (method == "POST" && path == "/codestats") {
-            responseBody = handleApiRequest(method, path, body, contentType, statusCode);
-        } else if (method == "POST" && path == "/codestats/export") {
+        } else if (method == "POST" && routingPath == "/move") {
+            responseBody = handleApiRequest(method, routingPath, body, contentType, statusCode);
+        } else if (method == "POST" && routingPath == "/reset") {
+            responseBody = handleApiRequest(method, routingPath, body, contentType, statusCode);
+        } else if (method == "POST" && routingPath == "/rain") {
+            responseBody = handleApiRequest(method, routingPath, body, contentType, statusCode);
+        } else if (method == "POST" && routingPath == "/pause") {
+            responseBody = handleApiRequest(method, routingPath, body, contentType, statusCode);
+        } else if (method == "POST" && routingPath == "/duckai") {
+            responseBody = handleApiRequest(method, routingPath, body, contentType, statusCode);
+        } else if (method == "POST" && routingPath == "/codestats") {
+            responseBody = handleApiRequest(method, routingPath, body, contentType, statusCode);
+        } else if (method == "POST" && routingPath == "/codestats/export") {
             const std::string directory = parseDirectory(body);
             const std::string targetDir = directory.empty() ? "." : directory;
             backend::CodeStatsOptions options;
@@ -601,23 +733,23 @@ void WebServer::handleClient(int clientSocket) {
                 {"Content-Disposition", "attachment; filename=\"" + filename + "\""}};
             sendHttpResponse(clientSocket, "HTTP/1.1 200 OK", payload, mime, headers);
             return;
-        } else if (method == "GET" && path == "/attendance/roster") {
-            responseBody = handleApiRequest(method, path, body, contentType, statusCode);
-        } else if (method == "GET" && path == "/attendance/previous") {
-            responseBody = handleApiRequest(method, path, body, contentType, statusCode);
-        } else if (method == "GET" && path == "/attendance/next") {
-            responseBody = handleApiRequest(method, path, body, contentType, statusCode);
-        } else if (method == "POST" && path == "/attendance/mark") {
+        } else if (method == "GET" && routingPath == "/attendance/roster") {
+            responseBody = handleApiRequest(method, routingPath, body, contentType, statusCode);
+        } else if (method == "GET" && routingPath == "/attendance/previous") {
+            responseBody = handleApiRequest(method, routingPath, body, contentType, statusCode);
+        } else if (method == "GET" && routingPath == "/attendance/next") {
+            responseBody = handleApiRequest(method, routingPath, body, contentType, statusCode);
+        } else if (method == "POST" && routingPath == "/attendance/mark") {
             responseBody = handleAttendanceMark(body, contentType, statusCode);
-        } else if (method == "POST" && path == "/layout") {
-            responseBody = handleApiRequest(method, path, body, contentType, statusCode);
-        } else if (method == "POST" && path == "/print_longest_function") {
-            responseBody = handleApiRequest(method, path, body, contentType, statusCode);
-        } else if (method == "POST" && path == "/print_shortest_function") {
-            responseBody = handleApiRequest(method, path, body, contentType, statusCode);
+        } else if (method == "POST" && routingPath == "/layout") {
+            responseBody = handleApiRequest(method, routingPath, body, contentType, statusCode);
+        } else if (method == "POST" && routingPath == "/print_longest_function") {
+            responseBody = handleApiRequest(method, routingPath, body, contentType, statusCode);
+        } else if (method == "POST" && routingPath == "/print_shortest_function") {
+            responseBody = handleApiRequest(method, routingPath, body, contentType, statusCode);
         } else {
             sendNotFound(clientSocket);
-            backend::Logger::instance().log("Responded 404 for path " + path + ".");
+            backend::Logger::instance().log("Responded 404 for path " + routingPath + ".");
             return;
         }
     } catch (const std::exception& ex) {
@@ -734,6 +866,94 @@ std::string WebServer::handleApiRequest(const std::string& method,
         std::ostringstream oss;
         oss << R"({"success":true,"paused":)" << (paused ? "true" : "false") << "}";
         return oss.str();
+    } else if (method == "POST" && path == "/duckai") {
+        ensureCurlInitialized();
+
+        const char* apiKey = std::getenv("OPENAI_API_KEY");
+        if (!apiKey || std::string(apiKey).empty()) {
+            statusCode = 500;
+            return R"({"success":false,"error":"Missing OPENAI_API_KEY environment variable on server."})";
+        }
+
+        std::string message = parseFormValue(body, "message");
+        if (message.empty()) {
+            message = extractJsonStringField(body, "message");
+        }
+        if (message.empty()) {
+            message = extractJsonStringField(body, "content");
+        }
+        if (message.empty()) {
+            statusCode = 400;
+            return R"({"success":false,"error":"Missing message."})";
+        }
+
+        std::string model = parseFormValue(body, "model");
+        if (model.empty()) {
+            model = extractJsonStringField(body, "model");
+        }
+        if (model.empty()) {
+            model = "qwen-plus";
+        }
+
+        std::string systemPrompt = parseFormValue(body, "systemPrompt");
+        if (systemPrompt.empty()) {
+            systemPrompt = extractJsonStringField(body, "systemPrompt");
+        }
+        if (systemPrompt.empty()) {
+            systemPrompt = "You are a helpful assistant.";
+        }
+
+        const std::string requestJson =
+            std::string(R"({"model":")") + jsonEscape(model) + R"(","messages":[{"role":"system","content":")" +
+            jsonEscape(systemPrompt) + R"("},{"role":"user","content":")" + jsonEscape(message) + R"("}]})";
+
+        CURL* curl = curl_easy_init();
+        if (!curl) {
+            statusCode = 500;
+            return R"({"success":false,"error":"Failed to initialize curl."})";
+        }
+
+        std::string responsePayload;
+        std::unique_ptr<curl_slist, CurlSlistDeleter> headers;
+        headers.reset(curl_slist_append(headers.release(), "Content-Type: application/json"));
+        headers.reset(curl_slist_append(headers.release(),
+                                        (std::string("Authorization: Bearer ") + apiKey).c_str()));
+
+        curl_easy_setopt(curl, CURLOPT_URL,
+                         "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions");
+        curl_easy_setopt(curl, CURLOPT_POST, 1L);
+        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers.get());
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, requestJson.c_str());
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, static_cast<long>(requestJson.size()));
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curlWriteToString);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &responsePayload);
+        curl_easy_setopt(curl, CURLOPT_TIMEOUT, 20L);
+
+        const CURLcode res = curl_easy_perform(curl);
+        long httpStatus = 0;
+        curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &httpStatus);
+        curl_easy_cleanup(curl);
+
+        if (res != CURLE_OK) {
+            statusCode = 502;
+            return std::string(R"({"success":false,"error":"Upstream request failed.","detail":")") +
+                   jsonEscape(curl_easy_strerror(res)) + R"("})";
+        }
+
+        if (httpStatus < 200 || httpStatus >= 300) {
+            statusCode = static_cast<int>(httpStatus == 0 ? 502 : httpStatus);
+            if (!responsePayload.empty()) {
+                return responsePayload;
+            }
+            return R"({"success":false,"error":"Upstream returned non-2xx with empty body."})";
+        }
+
+        if (responsePayload.empty()) {
+            statusCode = 502;
+            return R"({"success":false,"error":"Upstream returned empty response."})";
+        }
+
+        return responsePayload;
     } else if (method == "POST" && path == "/codestats") {
         const std::string directory = parseDirectory(body);
         const std::string targetDir = directory.empty() ? "." : directory;

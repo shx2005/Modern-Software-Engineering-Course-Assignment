@@ -1,0 +1,2 @@
+CXXFLAGS=-std=c++17 -Wall -Wextra -Wpedantic -Iinclude -DHAVE_MYSQL -I/opt/homebrew/Cellar/mysql/9.3.0/include/mysql 
+LDLIBS=-lcurl -L/usr/local/lib -L/opt/homebrew/lib -L/opt/homebrew/Cellar/mysql/9.3.0/lib -lmysqlclient -lz  -lzstd  -lssl  -lcrypto -lresolv
